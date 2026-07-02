@@ -46,3 +46,17 @@ test("html 模式替换裸文本", () => {
   const { text } = applyDict(src, { Loading: "加载中" }, { html: true });
   expect(text).toBe(`<title>加载中</title>`);
 });
+
+test("key 含 ${ 时跳过反引号形式（不替换）", () => {
+  const src = "`Save ${x}`";
+  const { text, counts } = applyDict(src, { "Save ${x}": "保存" });
+  expect(text).toBe("`Save ${x}`");
+  expect(counts["Save ${x}"]).toBeUndefined();
+});
+
+test("html 模式统计替换次数", () => {
+  const src = `<title>Loading</title> Loading`;
+  const { text, counts } = applyDict(src, { Loading: "加载中" }, { html: true });
+  expect(text).toBe(`<title>加载中</title> 加载中`);
+  expect(counts.Loading).toBe(2);
+});
