@@ -5,9 +5,8 @@ import { join } from "path";
 import { locateAsar } from "./src/locate.js";
 import { ensureBackup, restore as restoreBackup } from "./src/backup.js";
 import { extractAsar, packAsar, deriveUnpackDir, unpackedSet } from "./src/asar.js";
-import { translateTree } from "./src/translate.js";
+import { injectInto } from "./src/inject.js";
 import { extractCandidates } from "./src/extract-strings.js";
-import { formatReport } from "./src/report.js";
 
 function parseArgs(argv) {
   const cmd = argv[0];
@@ -35,17 +34,14 @@ async function cmdApply(opts) {
     extractAsar(bakAsar, tmp);
     const dictPath = opts.dict || "translations.json";
     const dict = JSON.parse(readFileSync(dictPath, "utf8"));
-    const stats = translateTree(tmp, dict);
-    const report = formatReport(
-      {
-        dictSize: Object.keys(dict).length,
-        filesChanged: stats.filesChanged,
-        occurrences: stats.occurrences,
-        appliedKeys: Object.keys(stats.perKey).length,
-        unmatchedKeys: stats.unmatchedKeys,
-      },
-      { dryRun: !!opts.dryRun }
-    );
+    // 运行时注入式汉化：只在 DOM 上替换元素文字/属性，不改代码。
+    const stats = injectInto(tmp, dict);
+    const report =
+      (opts.dryRun ? "=== 汉化报告（DRY-RUN 试运行，未写入）===\n" : "=== 汉化报告（注入式）===\n") +
+      `字典条目: ${Object.keys(dict).length}\n` +
+      `可用中文条目(内嵌注入脚本): ${stats.entries}\n` +
+      `注入脚本: dist/renderer/zh-inject.js\n` +
+      `index.html 注入 <script>: ${stats.tagAdded ? "已添加" : "已存在(跳过)"}`;
     if (opts.dryRun) {
       console.log(report);
       return 0;
