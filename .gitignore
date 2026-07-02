@@ -2,3 +2,4 @@ node_modules/
 dist/
 *.bak
 *.bak.unpacked/
+translations.todo.json
