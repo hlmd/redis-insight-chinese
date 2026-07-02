@@ -1,0 +1,19 @@
+{
+  "name": "redisinsight-hanhua",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "hanhua": "hanhua.js" },
+  "scripts": {
+    "apply": "bun hanhua.js apply",
+    "extract": "bun hanhua.js extract",
+    "test": "bun test",
+    "build:win": "bun build --compile --target=bun-windows-x64 hanhua.js --outfile dist/hanhua-win-x64.exe",
+    "build:mac-arm": "bun build --compile --target=bun-darwin-arm64 hanhua.js --outfile dist/hanhua-macos-arm64",
+    "build:mac-x64": "bun build --compile --target=bun-darwin-x64 hanhua.js --outfile dist/hanhua-macos-x64",
+    "build:linux": "bun build --compile --target=bun-linux-x64 hanhua.js --outfile dist/hanhua-linux-x64",
+    "build:all": "bun run build:win && bun run build:mac-arm && bun run build:mac-x64 && bun run build:linux"
+  },
+  "dependencies": {
+    "@electron/asar": "^4.2.0"
+  }
+}
