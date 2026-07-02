@@ -60,3 +60,31 @@ test("restore 还原到英文原文", async () => {
   extractAsar(asar, check);
   expect(readFileSync(join(check, "dist/renderer/assets/index-x.js"), "utf8")).toBe(`x("Save")+y("Delete")`);
 });
+
+test("dry-run 不修改 asar 文件", async () => {
+  const { asar, dict } = await makeInstall();
+  const before = readFileSync(asar);
+  const code = await run(["apply", "--install", asar, "--dict", dict, "--dry-run"]);
+  expect(code).toBe(0);
+  const after = readFileSync(asar);
+  expect(after.equals(before)).toBe(true);
+});
+
+test("重复 apply 不重复翻译（始终从 pristine 备份出发）", async () => {
+  const { asar, dict } = await makeInstall();
+  await run(["apply", "--install", asar, "--dict", dict]);
+  const c1 = mkdtempSync(join(tmpdir(), "id1-"));
+  extractAsar(asar, c1);
+  const first = readFileSync(join(c1, "dist/renderer/assets/index-x.js"), "utf8");
+  await run(["apply", "--install", asar, "--dict", dict]);
+  const c2 = mkdtempSync(join(tmpdir(), "id2-"));
+  extractAsar(asar, c2);
+  const second = readFileSync(join(c2, "dist/renderer/assets/index-x.js"), "utf8");
+  expect(second).toBe(first);
+  expect(second).toBe(`x("保存")+y("删除")`);
+});
+
+test("未知命令返回非零退出码", async () => {
+  const code = await run(["bogus"]);
+  expect(code).toBe(2);
+});
