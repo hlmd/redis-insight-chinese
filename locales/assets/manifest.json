@@ -1,0 +1,12 @@
+{
+  "empty_list_dark": {
+    "sha256": "f9f5cf513ca5837ffdb6cde3841e5018d64f16d2d96c752c5bd2ff405e468460",
+    "file": "empty_list_dark.svg",
+    "from": "empty_list_dark-RFyuWxq_.svg"
+  },
+  "empty_list_light": {
+    "sha256": "26abb7db4e1eb9abbbcba34aa8c4557561a8c0b79a83636f8fac7e72068e648c",
+    "file": "empty_list_light.svg",
+    "from": "empty_list_light-BjmpyOLB.svg"
+  }
+}

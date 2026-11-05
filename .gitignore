@@ -1,5 +1,13 @@
 node_modules/
+.idea
 dist/
+# 编译期生成的可嵌入快照（由 scripts/build-data.js 生成）
+generated/
+
+# 汉化备份与 extract 产出的候选词表
 *.bak
 *.bak.unpacked/
 translations.todo.json
+
+# SDD 进度账本等本地临时文件
+.superpowers/

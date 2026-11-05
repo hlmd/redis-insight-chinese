@@ -1,11 +1,12 @@
 // test/cli.test.js
-import { test, expect } from "bun:test";
+import { test } from "node:test";
+import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { createPackageWithOptions } from "@electron/asar";
 import { extractAsar } from "../src/asar.js";
-import { run } from "../hanhua.js";
+import { run } from "../redis-insight-chinese.js";
 
 // index.html 含内联代码脚本 + module 入口脚本，用来验证注入不破坏代码。
 const INDEX_HTML = `<!doctype html><html><head>
@@ -13,6 +14,8 @@ const INDEX_HTML = `<!doctype html><html><head>
 </head><body><div id="root"></div>
 <script type="module" crossorigin src="./assets/index-x.js"></script>
 </body></html>`;
+
+const MAIN_JS = "!function(){}();\nmenu.label=\"Window\";\n";
 
 async function makeInstall() {
   const work = mkdtempSync(join(tmpdir(), "cli-"));
@@ -23,6 +26,8 @@ async function makeInstall() {
   writeFileSync(join(srcTree, "dist/renderer/index.html"), INDEX_HTML);
   writeFileSync(join(srcTree, "dist/renderer/assets/index-x.js"), `x("Save")+y("Delete")`);
   writeFileSync(join(srcTree, "node_modules/better-sqlite3/build/x.node"), "BIN");
+  writeFileSync(join(srcTree, "package.json"), JSON.stringify({ name: "redisinsight", main: "./dist/main/main.js" }));
+  writeFileSync(join(srcTree, "dist/main/main.js"), MAIN_JS);
   const resources = join(work, "resources");
   mkdirSync(resources, { recursive: true });
   const asar = join(resources, "app.asar");
@@ -32,49 +37,62 @@ async function makeInstall() {
   return { work, asar, dict };
 }
 
-test("apply 注入 zh-inject.js，加 script 引用，代码与 unpacked 不被破坏", async () => {
+test("apply 注入 ri-chinese.js，加 script 引用，代码与 unpacked 不被破坏", async () => {
   const { asar, dict } = await makeInstall();
 
   const code0 = await run(["apply", "--install", asar, "--dict", dict, "--dry-run"]);
-  expect(code0).toBe(0);
+  assert.strictEqual(code0, 0);
 
   const code = await run(["apply", "--install", asar, "--dict", dict]);
-  expect(code).toBe(0);
-  expect(existsSync(asar + ".bak")).toBe(true);
+  assert.strictEqual(code, 0);
+  assert.strictEqual(existsSync(asar + ".bak"), true);
 
   const check = mkdtempSync(join(tmpdir(), "chk-"));
   extractAsar(asar, check);
   // 注入脚本存在且含中文字典
-  expect(existsSync(join(check, "dist/renderer/zh-inject.js"))).toBe(true);
-  expect(readFileSync(join(check, "dist/renderer/zh-inject.js"), "utf8")).toContain("保存");
+  assert.strictEqual(existsSync(join(check, "dist/renderer/ri-chinese.js")), true);
+  assert.ok((readFileSync(join(check, "dist/renderer/ri-chinese.js"), "utf8")).includes("保存"));
   // index.html 加了引用，且代码脚本未被改动
   const html = readFileSync(join(check, "dist/renderer/index.html"), "utf8");
-  expect(html).toContain('<script src="./zh-inject.js"></script>');
-  expect(html).toContain('P.startsWith("/")'); // 代码原封不动
+  assert.ok((html).includes('<script src="./ri-chinese.js"></script>'));
+  assert.ok((html).includes('P.startsWith("/")')); // 代码原封不动
   // 业务 JS 未被改动（不再做字符串静态替换）
-  expect(readFileSync(join(check, "dist/renderer/assets/index-x.js"), "utf8")).toBe(`x("Save")+y("Delete")`);
+  assert.strictEqual(readFileSync(join(check, "dist/renderer/assets/index-x.js"), "utf8"), `x("Save")+y("Delete")`);
   // unpacked 原生文件仍在
-  expect(readFileSync(join(check, "node_modules/better-sqlite3/build/x.node"), "utf8")).toBe("BIN");
+  assert.strictEqual(readFileSync(join(check, "node_modules/better-sqlite3/build/x.node"), "utf8"), "BIN");
+});
+
+test("apply 接入主进程菜单钩子,原 main.js 仅在开头多一行 require", async () => {
+  const { asar, dict } = await makeInstall();
+  assert.strictEqual(await run(["apply", "--install", asar, "--dict", dict]), 0);
+  const check = mkdtempSync(join(tmpdir(), "chk-main-"));
+  extractAsar(asar, check);
+  const main = readFileSync(join(check, "dist/main/main.js"), "utf8");
+  assert.strictEqual(main.startsWith("try { require('./ri-main-cn.js'); }"), true);
+  assert.strictEqual(main.endsWith(MAIN_JS), true);
+  assert.strictEqual(existsSync(join(check, "dist/main/ri-main-cn.js")), true);
+  const data = JSON.parse(readFileSync(join(check, "dist/main/ri-main-data.json"), "utf8"));
+  assert.strictEqual(data["Display On System Tray"], "显示在系统托盘");
 });
 
 test("restore 还原：注入脚本消失，index.html 复原", async () => {
   const { asar, dict } = await makeInstall();
   await run(["apply", "--install", asar, "--dict", dict]);
   const code = await run(["restore", "--install", asar]);
-  expect(code).toBe(0);
+  assert.strictEqual(code, 0);
   const check = mkdtempSync(join(tmpdir(), "chk2-"));
   extractAsar(asar, check);
-  expect(existsSync(join(check, "dist/renderer/zh-inject.js"))).toBe(false);
-  expect(readFileSync(join(check, "dist/renderer/index.html"), "utf8")).toBe(INDEX_HTML);
+  assert.strictEqual(existsSync(join(check, "dist/renderer/ri-chinese.js")), false);
+  assert.strictEqual(readFileSync(join(check, "dist/renderer/index.html"), "utf8"), INDEX_HTML);
 });
 
 test("dry-run 不修改 asar 文件", async () => {
   const { asar, dict } = await makeInstall();
   const before = readFileSync(asar);
   const code = await run(["apply", "--install", asar, "--dict", dict, "--dry-run"]);
-  expect(code).toBe(0);
+  assert.strictEqual(code, 0);
   const after = readFileSync(asar);
-  expect(after.equals(before)).toBe(true);
+  assert.strictEqual(after.equals(before), true);
 });
 
 test("重复 apply 不重复注入 script 标签（始终从 pristine 备份出发）", async () => {
@@ -84,11 +102,11 @@ test("重复 apply 不重复注入 script 标签（始终从 pristine 备份出�
   const check = mkdtempSync(join(tmpdir(), "id-"));
   extractAsar(asar, check);
   const html = readFileSync(join(check, "dist/renderer/index.html"), "utf8");
-  const count = html.split('<script src="./zh-inject.js"></script>').length - 1;
-  expect(count).toBe(1);
+  const count = html.split('<script src="./ri-chinese.js"></script>').length - 1;
+  assert.strictEqual(count, 1);
 });
 
 test("未知命令返回非零退出码", async () => {
   const code = await run(["bogus"]);
-  expect(code).toBe(2);
+  assert.strictEqual(code, 2);
 });

@@ -1,0 +1,59 @@
+name: publish-update-data
+
+# 默认分支上词典 / 钩子有改动时，打包在线热更新数据包 ri-update.json.gz，
+# 强推到只含这一个文件的孤儿分支 update-data；注入程序运行时从这里（及 jsDelivr 镜像）拉取（见 src/updater.js）。
+# 这样改了译文不用发版，用户下次运行注入程序就能拿到最新译文。
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'locales/**'
+      - 'src/**'
+      - 'scripts/build-data.js'
+      - 'scripts/build-update.js'
+      - '.github/workflows/update-data.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: update-data
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      # 数据包里带钩子源码，先跑测试，坏的钩子不推给用户
+      - name: Test
+        run: npm test
+
+      - name: Build update bundle
+        run: node scripts/build-update.js
+
+      - name: Push to update-data branch
+        working-directory: dist/update
+        run: |
+          set -e
+          git init -q
+          git checkout -q --orphan update-data
+          git add ri-update.json.gz
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -qm "data: ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" update-data
+
+      # jsDelivr 对分支文件缓存最长 12h，主动刷新一下（失败无妨，客户端会同时比对 GitHub raw）
+      - name: Purge jsDelivr cache
+        continue-on-error: true
+        run: curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@update-data/ri-update.json.gz"

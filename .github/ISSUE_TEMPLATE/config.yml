@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 先看 README
+    url: https://github.com/hlmd/redis-insight-chinese/blob/main/README.md
+    about: 找不到安装目录、更新后变回英文、如何还原等，多数已有说明

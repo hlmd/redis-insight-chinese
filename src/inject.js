@@ -1,113 +1,96 @@
 // src/inject.js
-// 运行时注入式汉化：不改任何代码，只在渲染出的 DOM 上把英文文本/属性替换成中文。
-// 生成一个 zh-inject.js 注入脚本（内嵌字典），并在 index.html 里加一行 <script> 引用它。
-import { readFileSync, writeFileSync, existsSync } from "fs";
+// 渲染进程注入:把钩子 ri-chinese.js(前置内嵌字典)写到 dist/renderer/,并在 index.html 加一行 <script> 引用。
+// 钩子只在渲染出的 DOM 上把英文文本/属性替换成中文,不改任何应用代码。
+import { readFileSync, writeFileSync, existsSync, readdirSync } from "fs";
+import { createHash } from "crypto";
 import { join } from "path";
 
-// 运行时脚本主体（不含字典）。引用全局 __ZH_DICT__。
-// 只做「整段文本节点精确匹配」与「指定属性精确匹配」，所以不会误伤代码或部分单词。
-const RUNTIME = `(function () {
-  var DICT = (typeof __ZH_DICT__ !== "undefined") ? __ZH_DICT__ : {};
-  var ATTRS = ["placeholder", "title", "aria-label", "alt", "label"];
-  function tr(s) {
-    if (s == null) return null;
-    var t = ("" + s).trim();
-    if (!t) return null;
-    var z = DICT[t];
-    if (z == null || z === "") return null;
-    var lead = s.match(/^\\s*/)[0];
-    var trail = s.match(/\\s*$/)[0];
-    return lead + z + trail;
-  }
-  function doText(node) {
-    var v = node.nodeValue;
-    var z = tr(v);
-    if (z != null && z !== v) node.nodeValue = z;
-  }
-  function doAttrs(el) {
-    if (!el || el.nodeType !== 1 || !el.getAttribute) return;
-    for (var i = 0; i < ATTRS.length; i++) {
-      var a = ATTRS[i];
-      if (el.hasAttribute(a)) {
-        var cur = el.getAttribute(a);
-        var z = tr(cur);
-        if (z != null && z !== cur) el.setAttribute(a, z);
-      }
-    }
-  }
-  function walk(root) {
-    if (!root) return;
-    if (root.nodeType === 3) { doText(root); return; }
-    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
-    var list = [], n;
-    while ((n = w.nextNode())) list.push(n);
-    for (var i = 0; i < list.length; i++) doText(list[i]);
-    if (root.querySelectorAll) {
-      doAttrs(root);
-      var els = root.querySelectorAll("*");
-      for (var j = 0; j < els.length; j++) doAttrs(els[j]);
-    }
-  }
-  var observer = null;
-  var OBS_OPTS = { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS };
-  function onMut(muts) {
-    if (observer) observer.disconnect();
-    try {
-      for (var i = 0; i < muts.length; i++) {
-        var m = muts[i];
-        if (m.type === "characterData") doText(m.target);
-        else if (m.type === "attributes") doAttrs(m.target);
-        else if (m.addedNodes) {
-          for (var k = 0; k < m.addedNodes.length; k++) {
-            var an = m.addedNodes[k];
-            if (an.nodeType === 3) doText(an);
-            else if (an.nodeType === 1) walk(an);
-          }
-        }
-      }
-    } finally {
-      if (observer) observer.observe(document.documentElement, OBS_OPTS);
-    }
-  }
-  function start() {
-    walk(document.body || document.documentElement);
-    observer = new MutationObserver(onMut);
-    observer.observe(document.documentElement, OBS_OPTS);
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-  else start();
-})();
-`;
+export const RENDERER_FILE = "ri-chinese.js";
+const SCRIPT_TAG = `<script src="./${RENDERER_FILE}"></script>`;
 
-const INJECT_MARK = "zh-inject.js";
-const SCRIPT_TAG = '<script src="./zh-inject.js"></script>';
-
-// 生成注入脚本内容：内嵌字典（仅保留有中文值的条目）+ 运行时主体。
-export function buildInjectScript(dict) {
-  const clean = {};
-  for (const k of Object.keys(dict)) {
-    const v = dict[k];
-    if (v && v !== k) clean[k] = v;
+// 替换带英文字的插图:locales/assets/manifest.json 记录 { 名字: { sha256: 原图哈希, file } },
+// 找到 dist/renderer/assets/<名字>-<构建哈希>.svg,原图哈希一致才覆盖(上游换图就跳过)。
+// files: { "名字.svg": 文本 }。返回 { replaced: [...], skipped: [...] }
+export function injectAssets(rootDir, manifest, files) {
+  const dir = join(rootDir, "dist", "renderer", "assets");
+  const res = { replaced: [], skipped: [] };
+  if (!manifest || !existsSync(dir)) return res;
+  const names = readdirSync(dir);
+  for (const [name, info] of Object.entries(manifest)) {
+    const f = names.find((x) => x.startsWith(name + "-") && x.endsWith(".svg"));
+    const text = files[info.file];
+    if (!f || typeof text !== "string") { res.skipped.push(`${name}(安装包里没有)`); continue; }
+    const p = join(dir, f);
+    const sha = createHash("sha256").update(readFileSync(p)).digest("hex");
+    if (sha !== info.sha256) { res.skipped.push(`${name}(原图已变)`); continue; }
+    writeFileSync(p, text);
+    res.replaced.push(f);
   }
-  return "var __ZH_DICT__ = " + JSON.stringify(clean) + ";\n" + RUNTIME;
+  return res;
 }
 
-// 把注入脚本写入 dist/renderer/zh-inject.js，并在 index.html 中插入 <script> 引用。
-// 幂等：若已注入过则不重复插入（但仍会用最新字典覆盖 zh-inject.js）。
-export function injectInto(rootDir, dict) {
+// 近似 lodash startCase:按非字母数字与驼峰拆词、首字母大写、空格连接("JSONPath" → "JSON Path")
+export function startCase(s) {
+  return String(s).split(/[^A-Za-z0-9]+/)
+    .flatMap((w) => w.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+/g) || [])
+    .map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+}
+
+// 教程页把目录名做了 startCase(返回按钮)与 startCase().toUpperCase()(页标题),给目录词条补上这些写法
+// 变体正好撞上 Redis 数据类型名 / 模块名时不生成:"Time series" 的 startCase 是 "Time Series",
+// 而键类型筛选、数据库模块列表里的 "Time Series" 要保留英文
+const KEEP_ENGLISH = new Set([
+  "Hash", "List", "Set", "Sorted Set", "String", "Stream", "JSON", "Vector Set", "Array",
+  "Time Series", "TimeSeries", "Probabilistic", "Graph", "Bloom Filter", "Cuckoo Filter",
+].flatMap((s) => [s, s.toUpperCase()]));
+
+export function withCaseVariants(dict) {
+  const out = {};
+  for (const [en, zh] of Object.entries(dict || {})) {
+    if (!zh || zh === en) continue;
+    const sc = startCase(en);
+    for (const k of [sc, sc.toUpperCase(), en.toUpperCase()]) if (k && !(k in out) && !KEEP_ENGLISH.has(k)) out[k] = zh;
+  }
+  return { ...out, ...dict };
+}
+
+function clean(dict) {
+  const out = {};
+  for (const k of Object.keys(dict || {})) {
+    const v = dict[k];
+    if (v && v !== k) out[k] = v;
+  }
+  return out;
+}
+
+// 生成注入脚本内容:内嵌字典(仅保留有中文值的条目)+ 钩子源码。
+// tutorials = { markdown: {段落: 译文} } 与 mdSrc(md-segments.cjs 源码)同时给出时一并内联,
+// 钩子据此在教程 .md 加载时按段落替换正文。
+export function buildInjectScript(dict, hookSrc, { tutorials, mdSrc } = {}) {
+  let head = "var __ZH_DICT__ = " + JSON.stringify(clean(dict)) + ";\n";
+  const md = clean(tutorials && tutorials.markdown);
+  if (mdSrc && Object.keys(md).length) {
+    head += "var __ZH_TUTORIALS__ = " + JSON.stringify(md) + ";\n" + mdSrc + "\n";
+  }
+  return head + hookSrc;
+}
+
+// 幂等:已注入过则不重复插入 <script>(但仍用最新字典覆盖脚本)。
+export function injectInto(rootDir, dict, hookSrc, extra = {}) {
   const rendererDir = join(rootDir, "dist", "renderer");
   const htmlPath = join(rendererDir, "index.html");
-  const scriptPath = join(rendererDir, "zh-inject.js");
+  const scriptPath = join(rendererDir, RENDERER_FILE);
   if (!existsSync(htmlPath)) {
     throw new Error("未找到 index.html: " + htmlPath);
   }
 
   const entries = Object.keys(dict).filter((k) => dict[k] && dict[k] !== k).length;
-  writeFileSync(scriptPath, buildInjectScript(dict));
+  writeFileSync(scriptPath, buildInjectScript(dict, hookSrc, extra));
+  const tutorials = extra.mdSrc ? Object.keys(clean(extra.tutorials && extra.tutorials.markdown)).length : 0;
 
   let html = readFileSync(htmlPath, "utf8");
   let tagAdded = false;
-  if (!html.includes(INJECT_MARK)) {
+  if (!html.includes(SCRIPT_TAG)) {
     const moduleIdx = html.indexOf('<script type="module"');
     if (moduleIdx !== -1) {
       html = html.slice(0, moduleIdx) + SCRIPT_TAG + "\n    " + html.slice(moduleIdx);
@@ -120,5 +103,5 @@ export function injectInto(rootDir, dict) {
     tagAdded = true;
   }
 
-  return { scriptPath, htmlPath, entries, tagAdded };
+  return { scriptPath, htmlPath, entries, tutorials, tagAdded };
 }
