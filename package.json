@@ -1,6 +1,6 @@
 {
   "name": "redis-insight-chinese",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Redis Insight 桌面端非官方中文本地化工具(简体中文 / 繁體中文,运行时注入,跨平台 CLI)。与 Redis Ltd. 无关。",
   "type": "module",
   "bin": {
