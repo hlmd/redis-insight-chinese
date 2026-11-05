@@ -1,0 +1,221 @@
+name: build-binaries
+
+# 打 tag（v*）时构建全平台单文件二进制并作为 Release 资产上传；
+# 也可在 Actions 页手动触发（workflow_dispatch）只产出构建产物。
+# 在 Linux runner 上交叉编译，避开 Windows 主机交叉编译时 bun 下载不完整的问题（oven-sh/bun#25346）。
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # 允许 action-gh-release 创建 Release / 上传资产
+      id-token: write          # attest-build-provenance 需要 OIDC 令牌
+      attestations: write      # 写入构建来源证明（build provenance）
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+
+      # bun 只用来交叉编译单文件二进制
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build embeddable data
+        run: node scripts/build-data.js
+
+      - name: Cross-compile all targets
+        run: |
+          set -e
+          mkdir -p dist
+          build() { bun build ./redis-insight-chinese.js --compile --minify --target="bun-$1" --outfile "dist/$2"; }
+          build windows-x64  redis-insight-chinese-win-x64.exe
+          build linux-x64    redis-insight-chinese-linux-x64
+          build linux-arm64  redis-insight-chinese-linux-arm64
+          build darwin-x64   redis-insight-chinese-macos-x64
+          build darwin-arm64 redis-insight-chinese-macos-arm64
+          ls -la dist
+
+      - name: Compress binaries
+        run: |
+          set -e
+          cd dist
+          chmod +x redis-insight-chinese-linux-* redis-insight-chinese-macos-*
+          zip -9 redis-insight-chinese-win-x64.zip redis-insight-chinese-win-x64.exe
+          for f in redis-insight-chinese-linux-* redis-insight-chinese-macos-*; do
+            tar -cJf "$f.tar.xz" "$f"
+          done
+          # 只发布压缩包，删掉生二进制
+          find . -maxdepth 1 -type f -name 'redis-insight-chinese-*' ! -name '*.zip' ! -name '*.tar.xz' -delete
+          ls -la
+
+      - name: Generate SHA256SUMS.txt
+        run: |
+          set -e
+          cd dist
+          sha256sum redis-insight-chinese-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # 证明这些发行包由本仓库的公开工作流从公开源码构建：
+      #   gh attestation verify <文件> --repo <owner>/<repo>
+      - name: Attest build provenance
+        if: startsWith(github.ref, 'refs/tags/')
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/redis-insight-chinese-*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: redis-insight-chinese-binaries
+          path: dist/*
+
+      # 取 tag 注解正文（git tag -a vX.Y.Z -m "..."）拼在固定说明前面
+      - name: Compose release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -e
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}" || true
+          notes="$(git tag -l --format='%(contents)' "${GITHUB_REF_NAME}")"
+          : > release-notes.md
+          if [ -n "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            {
+              printf '## 本次更新\n\n'
+              printf '%s\n' "$notes"
+              printf '\n---\n\n'
+            } >> release-notes.md
+          fi
+          cat >> release-notes.md <<'RELEASE_BODY'
+          给 Redis Insight 桌面端注入中文界面的非官方第三方工具，支持简体中文与繁體中文：按系统语言自动选择，`--lang zh-TW` 可指定繁体。
+
+          下载对应平台的 `redis-insight-chinese-*` 压缩包（Windows 为 `.zip`，Linux/macOS 为 `.tar.xz`），解压得到单文件后，
+          **完全退出 Redis Insight** 再运行即可注入；`restore` 还原。也可用 Scoop / Homebrew / npm 安装，见 README。
+          （macOS/Linux 解压后如丢失执行权限：`chmod +x <文件名>`）
+
+          程序每次注入前会自动检查新版本并拉取最新译文（改了译文无需重新下载）；不想联网加 `--offline`。
+
+          详见 README。交流反馈 QQ 群：494969115。
+
+          **完整性校验**：`SHA256SUMS.txt` 为本次构建的校验和；所有发行包均由 GitHub Actions
+          从公开源码构建并附带来源证明，可用
+          `gh attestation verify <文件> --repo ${{ github.repository }}` 验证。
+
+          ---
+          ⚠️ **法律声明**：本项目为社区维护的非官方工具，**与 Redis Ltd. 无任何关联**，未获其授权、
+          赞助或背书；"Redis" 与 "Redis Insight" 是 Redis Ltd. 的商标。本仓库与发行包**不含、也不分发**
+          Redis Insight 的任何源代码或二进制。本工具在你**自己的机器**上修改你**自己安装**的 Redis Insight，
+          是否使用由你自行决定并承担风险。代码以 MIT 许可发布（不覆盖译文数据）。本说明不构成法律意见。
+          RELEASE_BODY
+          cat release-notes.md
+
+      - name: Publish release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            dist/redis-insight-chinese-*
+            dist/SHA256SUMS.txt
+          body_path: release-notes.md
+
+  # 发布到 npm:npx redis-insight-chinese / npm i -g redis-insight-chinese
+  # 认证优先用 npm 可信发布(Trusted Publishing,OIDC,无需令牌,需先在 npmjs.com 的包设置里绑定本仓库与 release.yml);
+  # 首次发布或未绑定时用仓库密钥 NPM_TOKEN。
+  publish-npm:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write          # 可信发布与 --provenance 需要 OIDC 令牌
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Check tag matches package.json
+        run: |
+          set -e
+          pkg="$(node -p 'require("./package.json").version')"
+          if [ "v${pkg}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} 与 package.json 版本 v${pkg} 不一致"; exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -e
+          name="$(node -p 'require("./package.json").name')"
+          ver="$(node -p 'require("./package.json").version')"
+          if npm view "${name}@${ver}" version >/dev/null 2>&1; then
+            echo "${name}@${ver} 已在 npm 上,跳过"; exit 0
+          fi
+          npm publish --provenance --access public
+
+  # 更新 Scoop bucket(hlmd/scoop-bucket)与 Homebrew tap(hlmd/homebrew-tap)里的清单。
+  # 需要仓库密钥 PACKAGING_TOKEN:对这两个仓库有 Contents 读写权限的 fine-grained PAT;没配就跳过。
+  update-package-managers:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: redis-insight-chinese-binaries
+          path: dist
+
+      - name: Generate manifests
+        run: node scripts/gen-packaging.js "${GITHUB_REF_NAME}" dist/SHA256SUMS.txt out
+
+      - name: Push to scoop-bucket and homebrew-tap
+        run: |
+          set -e
+          if [ -z "${PACKAGING_TOKEN}" ]; then
+            echo "::warning::未配置 PACKAGING_TOKEN,跳过更新 Scoop bucket / Homebrew tap"; exit 0
+          fi
+          push() {  # push <仓库> <本地目录>
+            dir="$(mktemp -d)"
+            git clone -q --depth 1 "https://x-access-token:${PACKAGING_TOKEN}@github.com/$1.git" "$dir"
+            cp -R "$2"/. "$dir"/
+            cd "$dir"
+            git add -A
+            if git diff --cached --quiet; then echo "$1 无变化"; cd - >/dev/null; return; fi
+            git -c user.name='github-actions[bot]' \
+                -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+                commit -qm "redis-insight-chinese ${GITHUB_REF_NAME}"
+            git push -q origin HEAD
+            echo "$1 已更新到 ${GITHUB_REF_NAME}"
+            cd - >/dev/null
+          }
+          push hlmd/scoop-bucket out/scoop
+          push hlmd/homebrew-tap out/homebrew

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 先看 README 常见问题
+    url: https://github.com/hlmd/redis-insight-chinese/blob/master/README.md#常见问题
+    about: 界面仍是英文、自动更新后变回英文、找不到安装目录、如何还原等，多数已有解法
+  - name: 💬 QQ 交流群
+    url: https://github.com/hlmd/redis-insight-chinese/blob/master/README.md#交流--反馈
+    about: 群号 494969115（也可直接提 Issue）

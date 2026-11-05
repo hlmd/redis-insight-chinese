@@ -1,0 +1,32 @@
+{
+  "betweenNumbers": {
+    "of": "/",
+    "out of": "/"
+  },
+  "afterNumber": {
+    "entries": "條",
+    "entry": "條",
+    "element": "個元素",
+    "elements": "個元素",
+    "Element(s)": "個元素",
+    "field": "個欄位",
+    "fields": "個欄位",
+    "member": "個成員",
+    "members": "個成員",
+    "subscription": "個訂閱",
+    "subscriptions": "個訂閱",
+    "subscription.": "個訂閱。",
+    "subscriptions.": "個訂閱。",
+    "database(s)": "個資料庫",
+    "database(s).": "個資料庫。",
+    "primary group(s)": "個主節點組"
+  },
+  "afterQuantity": {
+    ".": "。",
+    ";": "；",
+    "s": ""
+  },
+  "now": "剛剛",
+  "slowlogFrom": "，起始於 ",
+  "removeFromKeyOf": " 鍵"
+}

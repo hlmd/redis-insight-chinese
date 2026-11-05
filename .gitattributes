@@ -1,0 +1,5 @@
+# 源码统一 LF:npm 包入口带 shebang,CRLF 会让 macOS / Linux 上的 npx 报错
+*.js   text eol=lf
+*.cjs  text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf

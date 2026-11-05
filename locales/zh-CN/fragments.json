@@ -1,0 +1,17 @@
+{
+  "betweenNumbers": { "of": "/", "out of": "/" },
+  "afterNumber": {
+    "entries": "条", "entry": "条",
+    "element": "个元素", "elements": "个元素", "Element(s)": "个元素",
+    "field": "个字段", "fields": "个字段",
+    "member": "个成员", "members": "个成员",
+    "subscription": "个订阅", "subscriptions": "个订阅",
+    "subscription.": "个订阅。", "subscriptions.": "个订阅。",
+    "database(s)": "个数据库", "database(s).": "个数据库。",
+    "primary group(s)": "个主节点组"
+  },
+  "afterQuantity": { ".": "。", ";": "；", "s": "" },
+  "now": "刚刚",
+  "slowlogFrom": "，起始于 ",
+  "removeFromKeyOf": " 键"
+}
