@@ -1,5 +1,5 @@
 import { existsSync, statSync } from "fs";
-import { join, dirname } from "path";
+import { join, win32 } from "path";
 import { homedir } from "os";
 import { execSync } from "child_process";
 
@@ -51,7 +51,7 @@ export function parseRegInstallDirs(text) {
       const q = /^"([^"]+)"/.exec(v);
       v = q ? q[1] : v.replace(/,\s*-?\d+$/, "").split(/\s+\//)[0];
       if (!/\.exe$/i.test(v)) continue;
-      v = dirname(v);
+      v = win32.dirname(v); // 注册表里只会是 Windows 路径,在任何平台上都按 Windows 规则解析
     }
     if (v && /redis/i.test(v) && !out.includes(v)) out.push(v);
   }

@@ -21,7 +21,9 @@
     "build:mac-arm": "node scripts/build-bin.js bun-darwin-arm64 dist/redis-insight-chinese-macos-arm64",
     "build:mac-x64": "node scripts/build-bin.js bun-darwin-x64 dist/redis-insight-chinese-macos-x64",
     "build:linux": "node scripts/build-bin.js bun-linux-x64 dist/redis-insight-chinese-linux-x64",
-    "build:all": "npm run build:win && npm run build:mac-arm && npm run build:mac-x64 && npm run build:linux"
+    "build:all": "npm run build:win && npm run build:mac-arm && npm run build:mac-x64 && npm run build:linux && npm run build:linux-arm64",
+    "build:linux-arm64": "node scripts/build-bin.js bun-linux-arm64 dist/redis-insight-chinese-linux-arm64",
+    "build:update": "node scripts/build-update.js"
   },
   "engines": {
     "node": ">=22.12"
@@ -35,7 +37,7 @@
     "url": "https://github.com/hlmd/redis-insight-chinese/issues"
   },
   "dependencies": {
-    "@electron/asar": "^4.2.0"
+    "@electron/asar": "^4.3.1"
   },
   "license": "MIT"
 }

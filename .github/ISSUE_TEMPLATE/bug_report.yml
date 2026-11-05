@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         感谢反馈！请尽量填全下列信息，越全越好定位。
-        提问前可先看 [README](../../blob/main/README.md)。
+        提问前可先看 [README](../../blob/master/README.md)。
 
   - type: dropdown
     id: usage
