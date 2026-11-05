@@ -75,11 +75,16 @@ export function detectLang({ env = process.env, platform = process.platform, int
   return { lang: DEFAULT_LANG, from: "默认" };
 }
 
+/** 支持的语言清单,一行一个:「  zh-CN  简体中文」 */
+export function languageList(indent = "  ") {
+  return Object.entries(LANGUAGES).map(([code, l]) => `${indent}${code.padEnd(7)}${l.name}`).join("\n");
+}
+
 /** --lang 参数优先(须是支持的语言),否则自动探测。不支持的 --lang 抛异常。 */
 export function resolveLang(arg, opts) {
   if (arg) {
     const lang = normalizeLang(arg);
-    if (!lang) throw new Error(`不支持的语言: ${arg}。可用: ${Object.keys(LANGUAGES).join(", ")}`);
+    if (!lang) throw new Error(`不支持的语言: ${arg}。目前支持:\n${languageList()}`);
     return { lang, from: "--lang" };
   }
   return detectLang(opts);

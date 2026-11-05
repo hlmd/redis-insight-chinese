@@ -115,3 +115,46 @@ test("未知命令返回非零退出码", async () => {
   const code = await run(["bogus"]);
   assert.strictEqual(code, 2);
 });
+
+test("-h / --help / help 显示帮助,-v 显示版本,未知命令提示看帮助", async () => {
+  const logs = [];
+  const errs = [];
+  const log = mock.method(console, "log", (...a) => logs.push(a.join(" ")));
+  const err = mock.method(console, "error", (...a) => errs.push(a.join(" ")));
+  try {
+    for (const argv of [["-h"], ["--help"], ["help"], ["restore", "--help"]]) {
+      logs.length = 0;
+      assert.equal(await run(argv), 0, argv.join(" "));
+      assert.match(logs.join("\n"), /用法:[\s\S]*--lang <代码>/);
+    }
+    logs.length = 0;
+    assert.equal(await run(["-v"]), 0);
+    assert.match(logs.join("\n"), /^redis-insight-chinese v\d+\.\d+\.\d+$/);
+    assert.equal(await run(["foo"]), 2);
+    assert.match(errs.join("\n"), /-h 查看用法/);
+  } finally {
+    log.mock.restore();
+    err.mock.restore();
+    mock.method(console, "log", () => {});
+  }
+});
+
+test("只写 --lang 列出支持的语言;不支持的语言报错并附上清单", async () => {
+  const logs = [];
+  const errs = [];
+  const log = mock.method(console, "log", (...a) => logs.push(a.join(" ")));
+  const err = mock.method(console, "error", (...a) => errs.push(a.join(" ")));
+  try {
+    for (const argv of [["--lang"], ["--lang", "--offline"]]) {
+      logs.length = 0;
+      assert.equal(await run(argv), 0, argv.join(" "));
+      assert.match(logs.join("\n"), /zh-CN\s+简体中文[\s\S]*zh-TW\s+繁體中文/);
+    }
+    assert.equal(await run(["langs", "--lang", "ja", "--offline"]), 1);
+    assert.match(errs.join("\n"), /不支持的语言: ja[\s\S]*zh-TW\s+繁體中文/);
+  } finally {
+    log.mock.restore();
+    err.mock.restore();
+    mock.method(console, "log", () => {});
+  }
+});

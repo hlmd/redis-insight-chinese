@@ -214,11 +214,12 @@ node redis-insight-chinese.js            # 注入（等同 apply）
 | `verify` | 只讀檢查：asar 路徑、unpacked 原生模組數量、備份是否存在 |
 | `langs` | 列出支援的語言、各自的覆蓋率，以及本機會自動選中哪種 |
 | `extract` | 從安裝包提取候選英文串（開發用，見 [翻譯資料](#翻譯資料)） |
-| `version` | 顯示本工具版本 |
+| `version` | 顯示本工具版本（同 `-v`、`--version`） |
+| `help` | 顯示命令與選項說明（同 `-h`、`--help`） |
 
 | 選項 | 作用 |
 |------|------|
-| `--lang <代码>` | 指定語言（見上表）。不指定時依次看環境變數 `RI_LANG`、`LC_ALL` / `LC_MESSAGES` / `LANG`、macOS 的系統語言、系統區域設定，都認不出用簡體中文 |
+| `--lang <代码>` | 指定語言（見上表；只寫 `--lang` 不帶程式碼會列出支援的語言）。不指定時依次看環境變數 `RI_LANG`、`LC_ALL` / `LC_MESSAGES` / `LANG`、macOS 的系統語言、系統區域設定，都認不出用簡體中文 |
 | `--install <路径>` | 指定 Redis Insight 安裝目錄，或直接指向 `app.asar`（跳過自動探測） |
 | `--no-app-update` | 關閉 Redis Insight 自身的自動更新（見 [關閉自動更新](docs/disable-auto-update.md)） |
 | `--offline` | 不聯網：不自更新、不拉取線上譯文 |

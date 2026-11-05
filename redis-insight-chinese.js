@@ -13,13 +13,50 @@ import {
   readResource, readJsonResource, hasResource, RENDERER_HOOK, MAIN_HOOK, MD_SEGMENTS,
   REQUIRED_FILES, embeddedMeta, hasLocalData, setRemoteData,
 } from "./src/resources.js";
-import { LANGUAGES, resolveLang, localeFile } from "./src/i18n.js";
+import { LANGUAGES, resolveLang, localeFile, languageList } from "./src/i18n.js";
 import { resolveDataBundle, selfUpdate, cleanupOldBinary } from "./src/updater.js";
 import pkg from "./package.json" with { type: "json" };
 import { extractCandidates } from "./src/extract-strings.js";
 
 // 不带值的开关
 const FLAGS = { "--dry-run": "dryRun", "--offline": "offline", "--no-self-update": "noSelfUpdate", "--no-app-update": "noAppUpdate" };
+
+const help = () => `redis-insight-chinese —— 给 Redis Insight 桌面端注入中文界面(简体中文 / 繁體中文)
+
+用法:
+  redis-insight-chinese [命令] [选项]
+
+命令:
+  apply      注入翻译(默认,不写命令时就是它);注入前请完全退出 Redis Insight
+  restore    从备份还原英文原版
+  langs      列出支持的语言、覆盖率,以及本机会自动选中哪种
+  verify     只读检查:asar 路径、unpacked 原生模块数量、备份是否存在
+  extract    从安装包提取候选英文串(开发用,配合 --out、--min-len)
+  version    显示版本(同 -v、--version)
+  help       显示本帮助(同 -h、--help)
+
+选项:
+  --lang <代码>       指定语言(只写 --lang 不带代码就列出支持的语言);
+                      不指定时按 RI_LANG、LC_ALL / LANG、系统语言自动选择,认不出用简体中文
+  --install <路径>    Redis Insight 安装目录,或直接指向 app.asar(默认自动探测)
+  --no-app-update     关闭 Redis Insight 自身的自动更新(它升级会冲掉翻译)
+  --offline           不联网:不自更新、不拉取在线译文
+  --no-self-update    只拉取在线译文,不更新程序本身
+  --dry-run           试运行:只打印将注入的内容,不写回 app.asar
+  --dict <文件>       用指定的页面词典 JSON 覆盖内置词典
+  --out <文件>        输出到另一个 asar,不覆盖安装目录里的
+
+支持的语言:
+${languageList()}
+
+示例:
+  redis-insight-chinese                        按系统语言注入
+  redis-insight-chinese --lang zh-TW           注入繁體中文
+  redis-insight-chinese --no-app-update        注入并关闭 Redis Insight 自动更新
+  redis-insight-chinese restore                还原英文
+
+说明与问题反馈:https://github.com/hlmd/redis-insight-chinese
+`;
 
 function parseArgs(argv) {
   // 第一个参数是命令;直接以开关开头(如双击后只带 --offline)时视为 apply
@@ -29,6 +66,7 @@ function parseArgs(argv) {
   for (let i = hasCmd ? 1 : 0; i < argv.length; i++) {
     const a = argv[i];
     if (FLAGS[a]) opts[FLAGS[a]] = true;
+    else if (a === "--lang" && (i + 1 >= argv.length || argv[i + 1].startsWith("-"))) opts.lang = "";
     else if (a.startsWith("--")) opts[a.slice(2)] = argv[++i];
   }
   return { cmd, opts };
@@ -182,7 +220,21 @@ async function cmdLangs(opts) {
 }
 
 export async function run(argv) {
+  // 帮助 / 版本:出现在任何位置都直接响应,不联网、不注入
+  if (argv.some((a) => ["-h", "--help", "help", "/?"].includes(a))) {
+    console.log(help());
+    return 0;
+  }
+  if (argv.some((a) => ["-v", "--version", "-V"].includes(a))) {
+    console.log(`redis-insight-chinese v${toolVersion()}`);
+    return 0;
+  }
   const { cmd, opts } = parseArgs(argv);
+  if (opts.lang === "") {
+    console.log(`目前支持的语言(用 --lang <代码> 指定):
+${languageList()}`);
+    return 0;
+  }
   try {
     cleanupOldBinary();
     switch (cmd || "apply") {
@@ -205,7 +257,7 @@ export async function run(argv) {
       case "restore": return cmdRestore(opts);
       case "verify": return cmdVerify(opts);
       default:
-        console.error(`未知命令: ${cmd}。可用: apply | langs | extract | restore | verify | version(选项:--lang <代码> 指定语言、--offline 不联网、--no-self-update 不自更新、--no-app-update 关闭 Redis Insight 自动更新、--dry-run 试运行)`);
+        console.error(`未知命令: ${cmd}。运行 redis-insight-chinese -h 查看用法`);
         return 2;
     }
   } catch (e) {
