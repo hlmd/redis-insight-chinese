@@ -132,15 +132,16 @@ jobs:
           body_path: release-notes.md
 
   # 发布到 npm:npx redis-insight-chinese / npm i -g redis-insight-chinese
-  # 认证优先用 npm 可信发布(Trusted Publishing,OIDC,无需令牌,需先在 npmjs.com 的包设置里绑定本仓库与 release.yml);
-  # 首次发布或未绑定时用仓库密钥 NPM_TOKEN。
+  # 认证用 npm 可信发布(Trusted Publishing,OIDC,无需令牌;npmjs.com 包设置里已绑定本仓库与 release.yml)。
+  # 可信发布者只开了「npm stage publish」权限:这里发到暂存区,
+  # 维护者到 npmjs.com(或本机 npm stage approve)批准后才正式公开。
   publish-npm:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write          # 可信发布与 --provenance 需要 OIDC 令牌
+      id-token: write          # 可信发布需要 OIDC 令牌(也会自动生成来源证明)
     steps:
       - uses: actions/checkout@v7
 
@@ -160,9 +161,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # 暂存发布需要 npm CLI ≥ 11.15
+      - name: Update npm CLI
+        run: npm install -g npm@^11.15.0 && npm --version
+
+      - name: Stage publish
         run: |
           set -e
           name="$(node -p 'require("./package.json").name')"
@@ -170,7 +173,8 @@ jobs:
           if npm view "${name}@${ver}" version >/dev/null 2>&1; then
             echo "${name}@${ver} 已在 npm 上,跳过"; exit 0
           fi
-          npm publish --provenance --access public
+          npm stage publish --access public
+          echo "::notice::${name}@${ver} 已发到 npm 暂存区,请到 https://www.npmjs.com/package/${name} 批准后正式公开"
 
   # 更新 Scoop bucket(hlmd/scoop-bucket)与 Homebrew tap(hlmd/homebrew-tap)里的清单。
   # 需要仓库密钥 PACKAGING_TOKEN:对这两个仓库有 Contents 读写权限的 fine-grained PAT;没配就跳过。

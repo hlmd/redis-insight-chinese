@@ -35,9 +35,15 @@
 **用包管理器安裝**（裝好後在任意目錄直接用 `redis-insight-chinese` 命令，繁體加 `--lang zh-TW`；注入前先完全退出 Redis Insight）：
 
 ```bash
-scoop bucket add hlmd https://github.com/hlmd/scoop-bucket && scoop install hlmd/redis-insight-chinese   # Windows
-brew install hlmd/tap/redis-insight-chinese                                                             # macOS / Linux
-npx redis-insight-chinese                                                                              # 任意平台，需 Node.js ≥ 22.12
+# Windows（Scoop）
+scoop bucket add hlmd https://github.com/hlmd/scoop-bucket
+scoop install hlmd/redis-insight-chinese
+
+# macOS / Linux（Homebrew）
+brew install hlmd/tap/redis-insight-chinese
+
+# 任意平台（npm，需 Node.js ≥ 22.12）
+npx redis-insight-chinese
 ```
 
 詳見 [方式零：包管理器](#方式零包管理器scoop--homebrew--npm)。**或者手動下載**：

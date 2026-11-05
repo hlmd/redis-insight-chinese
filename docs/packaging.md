@@ -4,7 +4,7 @@
 
 | job | 做什么 | 需要 |
 |-----|--------|------|
-| `publish-npm` | 校验 tag 与 `package.json` 版本一致 → `npm publish --provenance`（该版本已存在就跳过） | npm 可信发布（推荐），或仓库密钥 `NPM_TOKEN` |
+| `publish-npm` | 校验 tag 与 `package.json` 版本一致 → `npm stage publish` 发到 npm 暂存区（该版本已存在就跳过） | npm 可信发布（已配置）；发布后到 npmjs.com 批准 |
 | `update-package-managers` | 用本次的 `SHA256SUMS.txt` 跑 `scripts/gen-packaging.js`，把清单推到两个仓库 | 仓库密钥 `PACKAGING_TOKEN`（没配就跳过并给出警告） |
 
 清单推送到：
@@ -20,7 +20,9 @@
 3. **npm**：
    - 第一次发布要手动来：`npm login`，然后在仓库根目录运行 `npm publish --access public`；
    - 之后在 npmjs.com 上，到这个包的 Settings → Trusted Publisher，选 GitHub Actions，填 `hlmd` / `redis-insight-chinese` / `release.yml`。
-     这样以后发版就不需要令牌了。如果不想用可信发布，就在主仓库添加密钥 `NPM_TOKEN`（Automation 类型的令牌）。
+     权限只开「npm stage publish」：CI 发到暂存区，要维护者到 npmjs.com 的包页面（或本机 `npm stage approve`）批准后才正式公开。
+     这样以后发版不需要任何 npm 令牌；可信发布者新建或修改后，要在页面提示的期限内由 CI 发布一次完成验证。
+   - npm 账号要开两步验证（通行密钥即可）；本机手动发布时 `npm publish` 会打开浏览器确认。
 
 ## 发版流程
 
