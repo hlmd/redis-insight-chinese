@@ -3,109 +3,91 @@
 **简体中文** · [繁體中文](README.zh-TW.md)
 
 [![Release](https://img.shields.io/github/v/release/hlmd/redis-insight-chinese?sort=semver)](../../releases)
+[![npm](https://img.shields.io/npm/v/redis-insight-chinese)](https://www.npmjs.com/package/redis-insight-chinese)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 [![Redis Insight](https://img.shields.io/badge/Redis%20Insight-3.x-red)](#支持的-redis-insight-版本)
 
-给 **Redis Insight 桌面端**注入中文界面，支持简体中文与繁體中文。译文已全部预置、开箱即用，按系统语言自动选择，也可用 `--lang` 指定：
-
-| 代码 | 语言 | 代码 | 语言 |
-|------|------|------|------|
-| `zh-CN` | 简体中文 | `zh-TW` | 繁體中文 |
-
-> 简体中文为人工复核译文；繁体中文由简体经 OpenCC 转换并套用常用词修正，欢迎提 Issue 纠错。
+给 **Redis Insight 桌面端**注入中文界面，支持**简体中文**（`zh-CN`）与**繁體中文**（`zh-TW`）。译文已全部预置、开箱即用，按系统语言自动选择，也可用 `--lang` 指定。
 
 - **单文件可执行程序**：Windows / macOS / Linux 都有，目标机无需装 Node；也可用 Node 源码运行。
 - **覆盖面广**：页面文字、原生菜单与对话框、内置教程（含代码块注释）、数据库分析的优化建议、命令助手。
 - **在线更新**：译文修好就能拿到，不用等发版；程序本身也会自动更新到最新 Release。
 
+> 简体中文为人工复核译文；繁體中文由简体经 OpenCC 转换并套用常用词修正，欢迎提 Issue 纠错。
+
 > [!WARNING]
-> **非官方项目**：与 Redis Ltd. 无任何关联，未获授权或背书；"Redis" 与 "Redis Insight" 是其商标。
-> 本仓库不含也不分发 Redis Insight 的任何源码或二进制。仅供个人本地使用，自负风险。
-> 详见文末 [法律声明](#法律声明--disclaimer)。
+> **非官方项目**：与 Redis Ltd. 无任何关联，未获授权或背书；"Redis" 与 "Redis Insight" 是其商标。本仓库不含也不分发 Redis Insight 的任何源码或二进制，仅供个人本地使用，自负风险。详见文末 [法律声明](#法律声明--disclaimer)。
 
-**目录**
-
-[快速开始](#快速开始) · [支持的版本](#支持的-redis-insight-版本) · [下载 Redis Insight](#下载-redis-insight) · [关闭自动更新](#关闭自动更新保持翻译不被冲掉) · [翻译范围](#翻译范围) · [工作原理](#工作原理) · [使用说明](#使用说明) · [报毒说明](#杀毒软件报毒误报说明) · [翻译数据](#翻译数据) · [常见问题](#常见问题) · [交流反馈](#交流--反馈) · [法律声明](#法律声明--disclaimer)
+**目录**：[快速开始](#快速开始) · [支持的版本](#支持的-redis-insight-版本) · [关闭自动更新](#关闭自动更新保持翻译不被冲掉) · [翻译范围](#翻译范围) · [工作原理](#工作原理) · [使用说明](#使用说明) · [命令与选项](#命令与选项) · [报毒说明](#杀毒软件报毒误报说明) · [翻译数据](#翻译数据) · [常见问题](#常见问题) · [交流反馈](#交流--反馈) · [法律声明](#法律声明--disclaimer)
 
 ---
 
 ## 快速开始
 
-**用包管理器安装**（装好后在任意目录直接用 `redis-insight-chinese` 命令，繁体加 `--lang zh-TW`；注入前先完全退出 Redis Insight）：
+先**完全退出 Redis Insight**（包括系统托盘里的图标），再任选一种方式：
 
 ```bash
 # Windows（Scoop）
 scoop bucket add hlmd https://github.com/hlmd/scoop-bucket
 scoop install hlmd/redis-insight-chinese
+redis-insight-chinese
 
 # macOS / Linux（Homebrew）
 brew install hlmd/tap/redis-insight-chinese
+redis-insight-chinese
 
-# 任意平台（npm，需 Node.js ≥ 22.12）
+# 任意平台（npm，需 Node.js ≥ 22.12），不安装直接运行
 npx redis-insight-chinese
 ```
 
-详见 [方式零：包管理器](#方式零包管理器scoop--homebrew--npm)。**或者手动下载**：
+想用繁體中文就加 `--lang zh-TW`。重新打开 Redis Insight，界面就是中文了。
 
-1. 到 [Release](../../releases) 下载对应平台的压缩包并解压；
-2. **完全退出 Redis Insight**（包括系统托盘里的图标）；
-3. 运行解压出的可执行文件（自动探测安装位置）；
-4. 重新打开 Redis Insight，界面变成系统语言（或 `--lang` 指定的语言）。
+不想装包管理器？到 [Release](../../releases) 下载对应平台的压缩包，解压后直接运行即可（见 [方式一](#方式一下载二进制)）。
 
-> 卸载翻译：运行时加 `restore`，如 `redis-insight-chinese-win-x64.exe restore`。
-> 想让 Redis Insight 不再自动升级（升级会冲掉翻译）：加 `--no-app-update`，见 [关闭自动更新](#关闭自动更新保持翻译不被冲掉)。
-
-下面是完整说明。
+- 还原英文：`redis-insight-chinese restore`
+- 不让 Redis Insight 自动升级（升级会冲掉翻译）：加 `--no-app-update`，见 [关闭自动更新](#关闭自动更新保持翻译不被冲掉)
+- 查看全部命令与选项：`redis-insight-chinese -h`
 
 ---
 
 ## 支持的 Redis Insight 版本
 
-| 项 | 说明 |
-|------|------|
-| **已适配** | Redis Insight 桌面端 **3.x**，以最新正式版（当前 3.8.0）为主要测试目标 |
-| **覆盖度** | 词典对齐「当前版本的界面文案」，越接近最新版覆盖越全；旧版界面文案不同，可能有部分未翻译 |
-| **形态** | Electron 安装版（`resources/app.asar`）；Docker / Web 版不在支持范围 |
+- **已适配**：Redis Insight 桌面端 **3.x**，以最新正式版（当前 3.8.0）为主要测试目标。
+- **覆盖度**：词典对齐当前版本的界面文案，越接近最新版覆盖越全；旧版的文案不同，可能有部分未翻译。
+- **形态**：Electron 安装版（`resources/app.asar`）；Docker / Web 版不在支持范围。
 
-翻译只依赖两点：安装目录里有 `app.asar`，以及渲染进程能加载本地脚本。界面文案以「整段文字」为单位匹配，
-版本升级后没变的文案继续显示译文，新增 / 改过的文案显示英文，直到词典补上。
+翻译只依赖两点：安装目录里有 `app.asar`，以及渲染进程能加载本地脚本。界面文案以「整段文字」为单位匹配，版本升级后没变的文案继续显示译文，新增或改过的文案显示英文，直到词典补上。
 
----
-
-## 下载 Redis Insight
-
-本工具**只注入**已安装的 Redis Insight，不包含 Redis Insight 本体。
-
-- 官方下载页：<https://redis.io/insight/>
-- 各版本发行说明与安装包：<https://github.com/redis/RedisInsight/releases>
+本工具**只注入**已安装的 Redis Insight，不包含 Redis Insight 本体。下载 Redis Insight：[官方下载页](https://redis.io/insight/) · [GitHub Releases](https://github.com/redis/RedisInsight/releases)
 
 ---
 
 ## 关闭自动更新（保持翻译不被冲掉）
 
-Redis Insight 会**自动下载新版、退出时安装**，安装会整包替换 `app.asar` → 界面变回英文。想固定在当前版本，注入时加 `--no-app-update`：
+Redis Insight 会**自动下载新版、退出时安装**，安装会整包替换 `app.asar`，界面就变回英文。想固定在当前版本，注入时加 `--no-app-update`：
 
 ```bash
-redis-insight-chinese-win-x64.exe --no-app-update
+redis-insight-chinese --no-app-update
 ```
 
-**👉 [关闭 Redis Insight 自动更新](docs/disable-auto-update.md)** —— 原理、手动设置环境变量的替代方法与恢复办法。
+原理、手动设置环境变量的替代方法与恢复办法，见 **[关闭 Redis Insight 自动更新](docs/disable-auto-update.md)**。
 
 ---
 
 ## 翻译范围
 
-| 部分 | 来源 | 说明 |
-|------|------|------|
-| **页面文字** | 安装包 | 按钮、标题、提示、表格、弹窗等，约 2200+ 条；拼接出来的句子片段按上下文翻译 |
-| **原生菜单 / 对话框** | 安装包（主进程） | 顶部菜单栏、托盘菜单、右键菜单、确认框；保留「窗口(&W)」形式的 Alt 快捷键 |
-| **内置教程** | 远端下发（`~/.redis-insight/tutorials`） | 目录树 + 正文，按段落翻译，**代码块里的 `//` 注释也翻**；命令照常能运行 |
-| **优化建议（Tips）** | 远端下发（`~/.redis-insight/content`） | 数据库分析页的建议、创建数据库入口等 |
-| **命令助手** | 远端下发（`commands.json`） | 700+ 条命令简介与复杂度说明 |
+| 部分 | 内容 |
+|------|------|
+| **页面文字** | 按钮、标题、提示、表格、弹窗等，约 2200+ 条 |
+| **菜单 / 对话框** | 顶部菜单栏、托盘菜单、右键菜单、确认框，保留 `窗口(&W)` 式快捷键 |
+| **内置教程** | 目录树与正文，代码块里的 `//` 注释也翻；命令照常能运行 |
+| **优化建议** | 数据库分析页的建议（Tips）、创建数据库入口等 |
+| **命令助手** | 700+ 条命令简介与复杂度说明 |
 
-**刻意保留英文**：Redis 命令与参数、数据类型名（Hash、List、Sorted Set、Stream、JSON、Time Series…）、模块名、产品名（Redis Cloud、Redis Software、RDI…）、
-命令助手的分组名——这些是对照官方文档时要用的关键词，翻了反而不好查。
+页面文字与菜单来自安装包；教程、优化建议、命令助手由 Redis Insight 运行时从网上下载（`~/.redis-insight/`），注入程序同样会翻译。
+
+**刻意保留英文**：Redis 命令与参数、数据类型名（Hash、List、Sorted Set、Stream、JSON、Time Series…）、模块名、产品名（Redis Cloud、Redis Software、RDI…）、命令助手的分组名。这些是对照官方文档时要用的关键词，翻了反而不好查。
 
 ---
 
@@ -113,62 +95,82 @@ redis-insight-chinese-win-x64.exe --no-app-update
 
 本工具**不修改 Redis Insight 原有的任何代码或字符串**，而是在 `app.asar` 里加几个运行时钩子：
 
-- **渲染进程**：写入 `dist/renderer/ri-chinese.js`，并在 `index.html` 里加一行 `<script>`。钩子用 `MutationObserver` 遍历 DOM，
-  只把**整段文字**以及 `title` / `placeholder` / `aria-label` 等属性中与词典精确匹配的英文换成目标语言，
-  并把 `<html lang>` 设成目标语言（简繁共用的汉字按它选对字形）。
+- **渲染进程**：写入 `dist/renderer/ri-chinese.js`，并在 `index.html` 里加一行 `<script>`。钩子用 `MutationObserver` 遍历 DOM，只把**整段文字**以及 `title`、`placeholder`、`aria-label` 等属性中与词典精确匹配的英文换成中文，并把 `<html lang>` 设成目标语言，让简繁共用的汉字选对字形。
   - 带 `{{占位}}` 的词条按模板匹配；数量类占位（`{{count}}` 等）只匹配数字，不会吞掉普通句子。
-  - 拼接句里的短词（`of`、`now`、`entries`…）太短不能全局替换，只按所在位置翻译（如「1 / 17」「(0 条)」「刚刚」），规则按语言写在 `locales/<语言>/fragments.json`。
+  - 拼接句里的短词（`of`、`now`、`entries`…）太短不能全局替换，只按所在位置翻译（如「1 / 17」「(0 条)」「刚刚」），规则写在 `locales/<语言>/fragments.json`。
 - **教程**：钩子拦截对 `static/tutorials/**.md` 的请求，渲染前按段落替换 Markdown 源文本；教程远端更新后不用重新注入。
-- **主进程**：写入 `dist/main/ri-main-cn.js`，在入口 `main.js` 最前面插一行 `require`，包装 `Menu.buildFromTemplate` 与 `dialog.showMessageBox`；
-  菜单的 Alt 快捷键补成「窗口(&W)」形式。
+- **主进程**：写入 `dist/main/ri-main-cn.js`，在入口 `main.js` 最前面插一行 `require`，包装 `Menu.buildFromTemplate` 与 `dialog.showMessageBox`，菜单的 Alt 快捷键补成 `窗口(&W)` 形式。
 
 因为是整段精确匹配，不会像「直接改 bundle 里的字符串」那样误伤代码（比如把 `startsWith` 改成 `starts使用`）。
 
-**备份与还原**：第一次注入时自动备份 `app.asar.bak`（及 `app.asar.unpacked` 的备份）。每次注入都「从备份重新解包 → 注入 → 打包」，
-可重复执行、结果一致；打包后会核对原生模块（`better-sqlite3` / `keytar` 等）一个不少，不一致自动回滚。`restore` 一键恢复英文原版。
+**备份与还原**：第一次注入时自动备份 `app.asar.bak`（及 `app.asar.unpacked` 的备份）。每次注入都「从备份重新解包 → 注入 → 打包」，可重复执行、结果一致；打包后会核对原生模块（`better-sqlite3`、`keytar` 等）一个不少，不一致自动回滚。`restore` 一键恢复英文原版。
 
 ---
 
 ## 使用说明
 
-### 方式零：包管理器（Scoop / Homebrew / npm）
+### 方式零：包管理器
 
-| 平台 | 安装 | 更新程序 | 卸载程序 |
-|------|------|----------|----------|
-| Windows（[Scoop](https://scoop.sh)） | `scoop bucket add hlmd https://github.com/hlmd/scoop-bucket`<br>`scoop install hlmd/redis-insight-chinese` | `scoop update redis-insight-chinese` | `scoop uninstall redis-insight-chinese` |
-| macOS / Linux（[Homebrew](https://brew.sh)） | `brew install hlmd/tap/redis-insight-chinese` | `brew upgrade redis-insight-chinese` | `brew uninstall redis-insight-chinese` |
-| 任意平台（npm，需 Node.js ≥ 22.12） | `npm i -g redis-insight-chinese`，或不安装直接 `npx redis-insight-chinese` | `npm i -g redis-insight-chinese@latest` | `npm rm -g redis-insight-chinese` |
+装好后命令统一是 `redis-insight-chinese`，在任意目录都能用。
 
-装好后命令统一是 `redis-insight-chinese`，参数与下文 [命令与选项](#命令与选项) 一致：
+**Windows（[Scoop](https://scoop.sh)）**
+
+```powershell
+scoop bucket add hlmd https://github.com/hlmd/scoop-bucket   # 只需一次
+scoop install hlmd/redis-insight-chinese                    # 安装
+scoop update redis-insight-chinese                          # 更新程序
+scoop uninstall redis-insight-chinese                       # 卸载程序
+```
+
+**macOS / Linux（[Homebrew](https://brew.sh)）**
+
+```bash
+brew install hlmd/tap/redis-insight-chinese     # 安装
+brew upgrade redis-insight-chinese              # 更新程序
+brew uninstall redis-insight-chinese            # 卸载程序
+```
+
+**任意平台（npm，需 Node.js ≥ 22.12）**
+
+```bash
+npx redis-insight-chinese                       # 不安装，直接运行最新版
+npm i -g redis-insight-chinese                  # 或全局安装
+npm i -g redis-insight-chinese@latest           # 更新程序
+npm rm -g redis-insight-chinese                 # 卸载程序
+```
+
+装好后的常用命令（完整列表见 [命令与选项](#命令与选项)）：
 
 ```bash
 redis-insight-chinese                    # 注入（先完全退出 Redis Insight）
+redis-insight-chinese --lang zh-TW       # 注入繁體中文
 redis-insight-chinese --no-app-update    # 注入，并关闭 Redis Insight 自动更新
 redis-insight-chinese restore            # 还原英文
 ```
 
-- **程序更新交给包管理器**：Scoop / Homebrew / npm 安装的版本不会自更新（否则包管理器记录的版本就对不上了），请用上表的更新命令；
-  **译文热更新照常**，每次注入都会拉最新译文。
+- **程序更新交给包管理器**：用包管理器安装的不会自更新（否则包管理器记录的版本就对不上了），请用上面的更新命令。**译文热更新照常**，每次注入都会拉最新译文。
 - 「卸载程序」只是删掉这个工具；要把 Redis Insight 变回英文，请先运行 `redis-insight-chinese restore`。
 - Redis Insight 装在需要管理员权限的目录（如 `C:\Program Files`、`/Applications`）时，需要用管理员终端或 `sudo` 运行。
 
-### 方式一：下载二进制（目标机无需 Node）
+### 方式一：下载二进制
 
-从 [Release](../../releases) 下载对应平台的压缩包，解压得到单文件：
+目标机无需 Node。从 [Release](../../releases) 下载对应平台的压缩包，解压得到一个同名的可执行文件：
 
-| 平台 | 下载文件 | 解压后 |
-|------|----------|--------|
-| Windows x64 | `redis-insight-chinese-win-x64.zip` | `redis-insight-chinese-win-x64.exe` |
-| Linux x64 / arm64 | `redis-insight-chinese-linux-x64.tar.xz` / `-arm64.tar.xz` | `redis-insight-chinese-linux-x64` / `-arm64` |
-| macOS Intel / Apple Silicon | `redis-insight-chinese-macos-x64.tar.xz` / `-arm64.tar.xz` | `redis-insight-chinese-macos-x64` / `-arm64` |
+| 平台 | 下载文件 |
+|------|----------|
+| Windows x64 | `redis-insight-chinese-win-x64.zip` |
+| Linux x64 | `redis-insight-chinese-linux-x64.tar.xz` |
+| Linux arm64 | `redis-insight-chinese-linux-arm64.tar.xz` |
+| macOS Intel | `redis-insight-chinese-macos-x64.tar.xz` |
+| macOS Apple Silicon | `redis-insight-chinese-macos-arm64.tar.xz` |
 
-> Windows 双击 `.zip` 即可解压；Linux / macOS：`tar -xf redis-insight-chinese-*.tar.xz`（解压后如丢失执行权限：`chmod +x <文件名>`）。
+Windows 双击 `.zip` 即可解压；Linux / macOS 用 `tar -xf redis-insight-chinese-*.tar.xz`，解压后如丢失执行权限，运行 `chmod +x <文件名>`。
 
 ```bash
 # 1. 完全退出 Redis Insight
 # 2. 注入（自动探测安装位置）
 ./redis-insight-chinese-win-x64.exe          # Windows
-./redis-insight-chinese-macos-arm64          # macOS / Linux
+./redis-insight-chinese-macos-arm64          # macOS / Linux 换成对应文件名
 # 3. 重新打开 Redis Insight
 ```
 
@@ -178,23 +180,21 @@ redis-insight-chinese restore            # 还原英文
 
 二进制每次注入前会联网检查两件事，任何一步失败都只提示、不影响注入：
 
-1. **程序自更新** —— 对比 GitHub 最新 Release，有新版就下载本平台压缩包（GitHub 直连与 `ghfast.top` 镜像**同时下载**，谁先完成用谁），
-   按 Release 附带的 `SHA256SUMS.txt` 校验后替换自身，再以相同参数运行新版本。
-2. **译文热更新** —— 默认分支每次改动词典，CI 就把全部译文 + 钩子打成 `ri-update.json.gz` 推到 [`update-data`](../../tree/update-data) 分支；
-   程序同时从 GitHub raw 与 jsDelivr 镜像拉取、取最新一份，缓存到本机（Windows `%LOCALAPPDATA%\redis-insight-chinese`、macOS `~/Library/Caches/…`、
-   Linux `~/.cache/…`），离线时用缓存。**不用等发版，译文修好就能拿到。**
+1. **程序自更新**：对比 GitHub 最新 Release，有新版就下载本平台压缩包（GitHub 直连与 `ghfast.top` 镜像**同时下载**，谁先完成用谁），按 Release 附带的 `SHA256SUMS.txt` 校验后替换自身，再以相同参数运行新版本。
+2. **译文热更新**：默认分支每次改动词典，CI 就把全部译文与钩子打成 `ri-update.json.gz` 推到 [`update-data`](../../tree/update-data) 分支。程序同时从 GitHub raw 与 jsDelivr 镜像拉取、取最新一份并缓存到本机，离线时用缓存。**不用等发版，译文修好就能拿到。**
 
 | 想要 | 加参数 |
 |------|--------|
 | 只更新译文、不替换程序 | `--no-self-update` |
-| 完全不联网（有缓存用缓存，否则用内嵌） | `--offline` |
+| 完全不联网 | `--offline` |
 
-> Windows 自更新后程序旁会留一个 `*.exe.old`，下次运行自动删除。程序所在目录没有写权限时自更新会跳过，照常注入。
-> 想用自己改的译文？把 `locales/` 文件夹放在**可执行文件旁边**即可覆盖内嵌与在线数据（此时不联网取译文）。
+- 译文缓存位置：Windows `%LOCALAPPDATA%\redis-insight-chinese`，macOS `~/Library/Caches/redis-insight-chinese`，Linux `~/.cache/redis-insight-chinese`。`--offline` 时有缓存用缓存，否则用内嵌译文。
+- Windows 自更新后程序旁会留一个 `*.exe.old`，下次运行自动删除。程序所在目录没有写权限时自更新会跳过，照常注入。
+- 想用自己改的译文？把 `locales/` 文件夹放在**可执行文件旁边**，就会覆盖内嵌与在线数据（此时不联网取译文）。
 
-### 方式二：Node 源码运行（开发 / 改译文）
+### 方式二：Node 源码运行
 
-需要 Node.js ≥ 22.12。源码模式以仓库里的 `locales/` 为准，不拉在线译文、也不自更新。
+适合开发或改译文。需要 Node.js ≥ 22.12；源码模式以仓库里的 `locales/` 为准，不拉在线译文、也不自更新。
 
 ```bash
 git clone git@github.com:hlmd/redis-insight-chinese.git
@@ -205,43 +205,43 @@ node redis-insight-chinese.js            # 注入（等同 apply）
 
 ### 命令与选项
 
-下面用 `node redis-insight-chinese.js` 举例；二进制把它换成可执行文件名即可。
+下面的命令名在包管理器安装时是 `redis-insight-chinese`，二进制换成可执行文件名，源码运行换成 `node redis-insight-chinese.js`。运行 `-h` 可随时查看。
 
 | 命令 | 作用 |
 |------|------|
-| `apply`（默认） | 注入翻译 |
+| `apply` | 注入翻译（默认，可省略） |
 | `restore` | 从备份还原英文原版 |
-| `verify` | 只读检查：asar 路径、unpacked 原生模块数量、备份是否存在 |
-| `langs` | 列出支持的语言、各自的覆盖率，以及本机会自动选中哪种 |
-| `extract` | 从安装包提取候选英文串（开发用，见 [翻译数据](#翻译数据)） |
-| `version` | 显示本工具版本（同 `-v`、`--version`） |
-| `help` | 显示命令与选项说明（同 `-h`、`--help`） |
+| `langs` | 列出支持的语言、覆盖率与本机自动选中哪种 |
+| `verify` | 只读检查：asar 路径、原生模块数量、备份是否存在 |
+| `extract` | 从安装包提取候选英文串（开发用） |
+| `version` | 显示版本（同 `-v`、`--version`） |
+| `help` | 显示帮助（同 `-h`、`--help`） |
 
 | 选项 | 作用 |
 |------|------|
-| `--lang <代码>` | 指定语言（见上表；只写 `--lang` 不带代码会列出支持的语言）。不指定时依次看环境变量 `RI_LANG`、`LC_ALL` / `LC_MESSAGES` / `LANG`、macOS 的系统语言、系统区域设置，都认不出用简体中文 |
-| `--install <路径>` | 指定 Redis Insight 安装目录，或直接指向 `app.asar`（跳过自动探测） |
-| `--no-app-update` | 关闭 Redis Insight 自身的自动更新（见 [关闭自动更新](docs/disable-auto-update.md)） |
-| `--offline` | 不联网：不自更新、不拉取在线译文 |
-| `--no-self-update` | 只拉取在线译文，不更新程序本身 |
-| `--dry-run` | 试运行：只打印将注入的内容，不写回 `app.asar` |
+| `--lang <代码>` | 指定语言：`zh-CN` 或 `zh-TW`（只写 `--lang` 列出支持的语言） |
+| `--install <路径>` | 指定安装目录或 `app.asar`，跳过自动探测 |
+| `--no-app-update` | 关闭 Redis Insight 自身的自动更新 |
+| `--offline` | 不联网：不自更新、不拉在线译文 |
+| `--no-self-update` | 只拉在线译文，不更新程序本身 |
+| `--dry-run` | 试运行：只打印将注入的内容，不写回 |
 | `--dict <文件>` | 用指定的页面词典 JSON 覆盖内置词典 |
 | `--out <文件>` | 输出到另一个 asar，不覆盖安装目录里的 |
 
+**自动选择语言**：不加 `--lang` 时，依次看环境变量 `RI_LANG`、`LC_ALL` / `LC_MESSAGES` / `LANG`、macOS 的系统语言、系统区域设置；`zh-TW`、`zh-HK`、`zh-Hant` 等选繁體中文，其余都认不出时用简体中文。
+
 #### 默认探测位置
 
-| 平台 | 位置 |
-|------|------|
-| Windows | 先查注册表卸载项（`HKCU` / `HKLM`），再查 `%LOCALAPPDATA%\Programs\Redis Insight`、`%ProgramFiles%\Redis Insight` 等 |
-| macOS | `/Applications/Redis Insight.app`、`~/Applications/Redis Insight.app` |
-| Linux | `/opt/Redis Insight`、`/opt/RedisInsight`、`/usr/lib/redisinsight` |
+- **Windows**：先查注册表卸载项（`HKCU` / `HKLM`），再查 `%LOCALAPPDATA%\Programs\Redis Insight`、`%ProgramFiles%\Redis Insight` 等。
+- **macOS**：`/Applications/Redis Insight.app`、`~/Applications/Redis Insight.app`。
+- **Linux**：`/opt/Redis Insight`、`/opt/RedisInsight`、`/usr/lib/redisinsight`。
 
-> 探测不到时用 `--install <安装目录>` 指定。macOS / Linux 的系统级目录可能需要 `sudo` 才能写入。
+探测不到时用 `--install <安装目录>` 指定。macOS / Linux 的系统级目录可能需要 `sudo` 才能写入。
 
 #### 验证注入是否成功
 
 - **看报告**：注入结束会打印各部分的条目数（页面 / 教程 / 静态内容 / 命令定义 / 主进程）和「已写入」。
-- **看界面**：重新打开 Redis Insight，菜单、按钮、教程变成目标语言即成功。
+- **看界面**：重新打开 Redis Insight，菜单、按钮、教程变成中文即成功。
 - **只读检查**：`verify` 显示备份是否存在（存在说明注入过至少一次）。
 
 ### 自行编译二进制
@@ -250,13 +250,17 @@ node redis-insight-chinese.js            # 注入（等同 apply）
 
 ```bash
 npm install
-npm run build:all       # 全部 5 个平台到 dist/；或 build:win / build:linux / build:linux-arm64 / build:mac-x64 / build:mac-arm
+npm run build:all       # 全部 5 个平台到 dist/
+npm run build:win       # 或单独编译：build:win / build:linux / build:linux-arm64 / build:mac-x64 / build:mac-arm
 ```
 
-> - 编译前会自动生成内嵌快照 `generated/embedded.json`（词典 + 钩子）。
-> - 在 Windows 上交叉编译**非 Windows** 目标时 Bun 可能下载不完整（oven-sh/bun#25346），可在对应平台或 WSL 上编译。
-> - 也可直接打 tag（`git tag -a v0.3.0 -m "本次更新…" && git push origin v0.3.0`），由 [`.github/workflows/release.yml`](.github/workflows/release.yml)
->   在 CI 上交叉编译、压缩并发布 Release（tag 注解会成为 Release 的「本次更新」）。
+- 编译前会自动生成内嵌快照 `generated/embedded.json`（词典 + 钩子）。
+- 在 Windows 上交叉编译**非 Windows** 目标时 Bun 可能下载不完整（oven-sh/bun#25346），可在对应平台或 WSL 上编译。
+- 也可以直接打 tag，由 [`release.yml`](.github/workflows/release.yml) 在 CI 上编译并发布 Release、npm、Scoop 与 Homebrew 清单（tag 注解会成为 Release 的「本次更新」）：
+
+  ```bash
+  git tag -a v0.3.3 -m "本次更新…" && git push origin v0.3.3
+  ```
 
 ---
 
@@ -264,9 +268,9 @@ npm run build:all       # 全部 5 个平台到 dist/；或 build:win / build:li
 
 部分杀毒软件可能把 `.exe` 标记为 `Trojan:Win32/Wacatac.B!ml` 之类的**启发式威胁**。这是**误报**：
 
-1. **单文件二进制的结构像加壳程序**——由 `bun --compile` 生成，产物 = 运行时 + 追加的脚本载荷，这类打包器被机器学习模型误判是行业级老问题；
-2. **行为像「打补丁器」**——本工具会读写你已安装的 Redis Insight 的 `app.asar`，行为规则上难以和恶意篡改区分；
-3. **未做代码签名**——新发布的未签名 exe 在 SmartScreen 下一律显示「未知发布者」。
+1. **单文件二进制的结构像加壳程序**：由 `bun --compile` 生成，产物是运行时加上追加的脚本载荷，这类打包器被机器学习模型误判是行业级老问题。
+2. **行为像「打补丁器」**：本工具会读写你已安装的 Redis Insight 的 `app.asar`，行为规则上难以和恶意篡改区分。
+3. **未做代码签名**：新发布的未签名 exe 在 SmartScreen 下一律显示「未知发布者」。
 
 **怎么自己核实**
 
@@ -276,7 +280,7 @@ npm run build:all       # 全部 5 个平台到 dist/；或 build:win / build:li
   Get-FileHash .\redis-insight-chinese-win-x64.zip -Algorithm SHA256
   ```
 
-- **验证构建来源**：所有二进制**均由 GitHub Actions 从公开源码构建**，并附带[构建来源证明](https://docs.github.com/actions/security-guides/using-artifact-attestations)：
+- **验证构建来源**：所有二进制**均由 GitHub Actions 从公开源码构建**，并附带[构建来源证明](https://docs.github.com/actions/security-guides/using-artifact-attestations)；npm 包也附带来源证明。
 
   ```bash
   gh attestation verify redis-insight-chinese-win-x64.zip --repo hlmd/redis-insight-chinese
@@ -284,8 +288,7 @@ npm run build:all       # 全部 5 个平台到 dist/；或 build:win / build:li
 
 - **上传 [VirusTotal](https://www.virustotal.com/) 复核**：少数引擎标红、主流引擎全绿，是典型的启发式误报特征。
 
-**不想跟杀软纠缠**：直接用[方式二](#方式二node-源码运行开发--改译文)跑源码，纯 JavaScript 不经打包器，不会触发这类误报。
-或把可执行文件加入杀软白名单（Defender：**Windows 安全中心 → 病毒和威胁防护 → 管理设置 → 排除项 → 添加文件**）。
+**不想跟杀软纠缠**：用 npm 运行（`npx redis-insight-chinese`）或 [方式二](#方式二node-源码运行) 跑源码，纯 JavaScript 不经打包器，不会触发这类误报。也可以把可执行文件加入杀软白名单（Defender：**Windows 安全中心 → 病毒和威胁防护 → 管理设置 → 排除项 → 添加文件**）。
 
 > 本工具只修改 Redis Insight 安装目录里的 `app.asar`（并自动备份），**不上传任何数据、不常驻后台**。联网只有两处：拉取在线译文、检查程序新版本，都可用 `--offline` 关掉。
 
@@ -295,20 +298,19 @@ npm run build:all       # 全部 5 个平台到 dist/；或 build:win / build:li
 
 ```
 locales/
-└── <语言>/                  # zh-CN、zh-TW
-    ├── renderer.json        # 页面词典 { "英文": "译文" }，支持 {{占位}}
-    ├── main.json            # 主进程词典（菜单 / 对话框），key 去掉助记符 &
-    ├── fragments.json       # 拼接句短词规则（量词、「刚刚」等，见渲染钩子 ri-chinese.js）
-    ├── tutorials.json       # 教程 { manifest: 目录树文字, markdown: 正文段落与代码注释 }
-    ├── content.json         # 优化建议 Tips 等远端静态内容 { dom: … }
-    └── commands.json        # 命令助手 { dom: 命令简介 / 复杂度 }
+└── <语言>/                 # zh-CN、zh-TW
+    ├── renderer.json       # 页面词典 { "英文": "译文" }，支持 {{占位}}
+    ├── main.json           # 主进程词典（菜单 / 对话框），key 去掉助记符 &
+    ├── fragments.json      # 拼接句短词规则（量词、「刚刚」等）
+    ├── tutorials.json      # 教程 { manifest: 目录树文字, markdown: 正文段落与代码注释 }
+    ├── content.json        # 优化建议等远端静态内容 { dom: … }
+    └── commands.json       # 命令助手 { dom: 命令简介 / 复杂度 }
 ```
 
 - key 是界面上**某个元素完整显示的英文文本**（或属性的完整值），区分大小写；value 是译文。值为空或与 key 相同的条目不注入。
 - 除 `renderer.json` 外都是可选的，缺了对应部分就显示英文。
 - 短的单个小写词（`on`、`to`、`now`…）不收进全局词典，避免误改用户的键值、命令输出；需要时按上下文规则处理。
-- 词典由同级目录的 `redis-insight-locale-fetcher` 维护：从 Redis Insight 源码与安装包提取英文、按版本归档、只翻新增文案、校验后写回 `locales/`。
-  教程 / 静态内容 / 命令定义按远端发布时间或内容哈希单独更新。直接手改 `locales/` 也能生效，但下次同步会被覆盖。
+- 简体词典由同级目录的 `redis-insight-locale-fetcher` 维护：从 Redis Insight 源码与安装包提取英文、按版本归档、只翻新增文案、校验后写回 `locales/`；繁體词典由简体自动转换。直接手改 `locales/` 也能生效，但下次同步会被覆盖。
 
 **改了译文怎么生效**：源码模式重跑 `node redis-insight-chinese.js`；推送到默认分支后，二进制用户下次运行就会自动拿到。
 
@@ -316,26 +318,56 @@ locales/
 
 ## 常见问题
 
-**界面还是英文**
-① 注入前是否**完全退出** Redis Insight（含托盘图标）；② 报告最后是否有「已写入」；③ 是否打到了正在用的那份安装（多份安装用 `--install` 指定）。
+<details>
+<summary><b>界面还是英文</b></summary>
 
-**Redis Insight 自动更新后又变回英文**
+1. 注入前是否**完全退出**了 Redis Insight（含托盘图标）；
+2. 报告最后是否有「已写入」；
+3. 是否打到了正在用的那份安装（多份安装用 `--install` 指定）。
+
+</details>
+
+<details>
+<summary><b>Redis Insight 自动更新后又变回英文</b></summary>
+
 升级会整包替换 `app.asar`，重新运行一次注入程序即可（它会先把自己和译文更新到最新再注入）。想不再被冲掉：加 `--no-app-update`。
 
-**某处没翻译 / 翻译不当**
+</details>
+
+<details>
+<summary><b>某处没翻译 / 翻译不当</b></summary>
+
 附截图提 [Issue](../../issues)（选「漏译 / 误译」模板），说明所在界面。拼接句里的短词、程序按英文格式生成的日期（如 `Jul 21, 2026`）可能仍是英文。
 
-**`app.asar` 被占用 / `EBUSY` / `EPERM`**
+</details>
+
+<details>
+<summary><b><code>app.asar</code> 被占用 / <code>EBUSY</code> / <code>EPERM</code></b></summary>
+
 Redis Insight 还在运行，或系统目录需要管理员权限。退出应用后重试；macOS / Linux 系统目录用 `sudo`。
 
-**杀毒软件报毒 / SmartScreen 拦截**
+</details>
+
+<details>
+<summary><b>杀毒软件报毒 / SmartScreen 拦截</b></summary>
+
 单文件二进制的启发式误报，见 [杀毒软件报毒（误报）说明](#杀毒软件报毒误报说明)。
 
-**想卸载翻译 / 换一种语言**
-运行 `restore` 恢复到注入前的英文原版；换语言直接用 `--lang <代码>` 重新注入即可（每次都从备份重新生成）。
+</details>
 
-**命令行输出是中文**
-注入程序自己的提示信息目前只有简体中文，不影响 Redis Insight 界面用哪种语言。
+<details>
+<summary><b>想卸载翻译 / 切换简繁</b></summary>
+
+运行 `restore` 恢复到注入前的英文原版；切换简繁直接用 `--lang zh-CN` 或 `--lang zh-TW` 重新注入即可（每次都从备份重新生成）。
+
+</details>
+
+<details>
+<summary><b>命令行输出只有简体</b></summary>
+
+注入程序自己的提示信息目前只有简体中文，不影响 Redis Insight 界面用简体还是繁體。
+
+</details>
 
 ---
 
@@ -350,20 +382,20 @@ Redis Insight 还在运行，或系统目录需要管理员权限。退出应用
 
 | 信息 | 怎么拿 |
 |------|--------|
-| **操作系统与版本** | Windows 10/11、macOS 版本 + 芯片（Intel / Apple Silicon）、Linux 发行版 |
-| **Redis Insight 版本** | Redis Insight 菜单 `帮助 → 关于`（英文界面为 `Help → About`） |
-| **本工具版本** | 运行 `... version`，或所下载 Release 的版本号 |
-| **使用方式** | 二进制 / Node 源码运行 |
-| **注入报告** | 运行注入时终端输出的整段「本地化报告」 |
+| **系统与版本** | Windows 10/11；macOS 版本与芯片；Linux 发行版 |
+| **Redis Insight 版本** | 菜单 `帮助 → 关于`（英文界面 `Help → About`） |
+| **本工具版本** | 运行 `redis-insight-chinese -v` |
+| **使用方式** | 包管理器 / 二进制 / Node 源码 |
+| **注入报告** | 注入时终端输出的整段「本地化报告」 |
 | **完整报错** | 终端的完整错误文本，别只截一半 |
-| **复现步骤与截图** | 做了什么、期望什么、实际什么；未翻译的位置附截图标出 |
+| **复现步骤与截图** | 做了什么、期望什么、实际什么 |
 
 ---
 
 ## 法律声明 / Disclaimer
 
 - **非官方、无关联**：本项目是社区维护的第三方本地化工具，**与 Redis Ltd. 没有任何关联**，未获其授权、赞助或背书。"Redis" 与 "Redis Insight" 是 Redis Ltd. 的商标，此处仅作描述性指代。
-- **不分发 Redis Insight 资产**：本仓库**不包含、也不分发** Redis Insight 的任何源代码或二进制程序。仓库内容只有本项目自己的脚本与各语言译文。
+- **不分发 Redis Insight 资产**：本仓库**不包含、也不分发** Redis Insight 的任何源代码或二进制程序。仓库内容只有本项目自己的脚本与译文。
 - **译文数据**：`locales/` 下的译文派生自 Redis Insight 的界面文案、教程与命令文档。本项目对这部分**不主张版权**，也不保证其可在所有场景下自由再分发；如 Redis Ltd. 提出异议，将配合处理。
 - **本地使用、自负风险**：本工具在**你自己的机器**上修改**你自己安装**的 Redis Insight（重打包 `app.asar`）。是否使用由你自行决定并承担风险，请遵守 Redis Insight 的许可条款。
 - **许可**：本项目**自身代码**以 MIT 许可发布；该许可**不覆盖**上述派生自 Redis Insight 文案的译文数据。
@@ -376,27 +408,29 @@ Redis Insight 还在运行，或系统目录需要管理员权限。退出应用
 
 ```
 redis-insight-chinese/
-├── redis-insight-chinese.js        # CLI 入口：apply / langs / restore / verify / extract / version
+├── redis-insight-chinese.js     # CLI 入口：apply / langs / restore / verify / extract / version / help
 ├── src/
 │   ├── hooks/
-│   │   ├── ri-chinese.js           # 渲染进程钩子（DOM 替换 + 上下文规则 + 教程 .md 拦截 + <html lang>）
-│   │   ├── ri-main-cn.cjs     # 主进程钩子（原生菜单 / 对话框 + --no-app-update）
+│   │   ├── ri-chinese.js        # 渲染进程钩子（DOM 替换 + 上下文规则 + 教程 .md 拦截）
+│   │   ├── ri-main-cn.cjs       # 主进程钩子（原生菜单 / 对话框 + --no-app-update）
 │   │   └── md-segments.cjs      # 教程 Markdown 段落切分器（钩子与 fetcher 共用）
 │   ├── inject.js                # 写入渲染钩子
 │   ├── menu.js                  # 写入主进程钩子
-│   ├── i18n.js                  # 支持的语言、系统语言探测、各语言词典路径
+│   ├── i18n.js                  # 支持的语言、系统语言探测、词典路径
 │   ├── updater.js               # 在线更新：程序自更新 + 译文热更新
 │   ├── resources.js             # 词典 / 钩子读取（exe 旁 > 仓库 > 在线数据包 > 内嵌快照）
 │   └── locate.js / asar.js / backup.js / …
-├── locales/                     # 各语言词典（见「翻译数据」）
+├── locales/                     # 简繁词典（见「翻译数据」）
 ├── scripts/
 │   ├── build-data.js            # 生成内嵌快照 generated/embedded.json
 │   ├── build-bin.js             # bun --compile 编译单文件二进制
-│   └── build-update.js          # 生成在线数据包 dist/update/ri-update.json.gz
-├── docs/disable-auto-update.md
+│   ├── build-update.js          # 生成在线数据包 dist/update/ri-update.json.gz
+│   ├── gen-packaging.js         # 生成 Scoop / Homebrew 清单
+│   └── check-readme.js          # 检查 README 的页内链接
+├── docs/                        # 关闭自动更新、包管理器发布说明
 ├── test/                        # npm test
 └── .github/workflows/
-    ├── release.yml              # 打 v* tag：测试、交叉编译、校验和、来源证明、发 Release
+    ├── release.yml              # 打 v* tag：测试、编译、发 Release、npm、Scoop / Homebrew 清单
     └── update-data.yml          # 默认分支改词典：打包在线数据包推到 update-data 分支
 ```
 
