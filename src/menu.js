@@ -6,6 +6,7 @@ import { join, dirname } from "path";
 
 export const MAIN_HOOK_FILE = "ri-main-cn.js";
 export const MAIN_DATA_FILE = "ri-main-data.json";
+export const MAIN_OPTIONS_FILE = "ri-main-options.json"; // { noAppUpdate } 见钩子头部注释
 const REQUIRE_LINE =
   `try { require('./${MAIN_HOOK_FILE}'); } catch (e) { console.error('[ri-main-cn] load failed', e); }\n`;
 
@@ -22,7 +23,7 @@ export function injectMainEntry(text) {
   return head + REQUIRE_LINE + rest;
 }
 
-export function injectMenu(rootDir, dict, hookSrc) {
+export function injectMenu(rootDir, dict, hookSrc, options = {}) {
   const pkgPath = join(rootDir, "package.json");
   if (!existsSync(pkgPath)) return { entries: 0, mainPatched: false, skipped: true };
   const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
@@ -32,6 +33,7 @@ export function injectMenu(rootDir, dict, hookSrc) {
   const dir = dirname(entryPath);
   writeFileSync(join(dir, MAIN_HOOK_FILE), hookSrc);
   writeFileSync(join(dir, MAIN_DATA_FILE), JSON.stringify(dict));
+  writeFileSync(join(dir, MAIN_OPTIONS_FILE), JSON.stringify({ noAppUpdate: !!options.noAppUpdate }));
 
   // latin1 按字节无损往返(插入的行是纯 ASCII),不会因重新编码改动原文件其它字节
   const src = readFileSync(entryPath, "latin1");

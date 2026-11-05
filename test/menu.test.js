@@ -90,3 +90,37 @@ test("injectMenu 写入钩子与词典并接入入口;无 package.json 时跳过
   const empty = mkdtempSync(join(tmpdir(), "menu-empty-"));
   assert.strictEqual(injectMenu(empty, DICT, HOOK_SRC).skipped, true);
 });
+
+test("--no-app-update:写入 ri-main-options.json,钩子据此关闭 Redis Insight 自动更新", () => {
+  const root = mkdtempSync(join(tmpdir(), "menu-opt-"));
+  mkdirSync(join(root, "dist", "main"), { recursive: true });
+  writeFileSync(join(root, "package.json"), JSON.stringify({ main: "dist/main/main.js" }));
+  writeFileSync(join(root, "dist", "main", "main.js"), "module.exports = 1;\n");
+  injectMenu(root, { File: "文件" }, HOOK_SRC, { noAppUpdate: true });
+  const optPath = join(root, "dist", "main", "ri-main-options.json");
+  assert.deepEqual(JSON.parse(readFileSync(optPath, "utf8")), { noAppUpdate: true });
+  // 在副本目录里加载钩子:应设置更新相关环境变量
+  const keys = ["RI_MANUAL_UPGRADES_LINK", "RI_UPGRADES_LINK", "RI_DISABLE_AUTO_UPGRADE"];
+  const saved = Object.fromEntries(keys.map((k) => [k, process.env[k]]));
+  try {
+    for (const k of keys) delete process.env[k];
+    const hookPath = join(root, "dist", "main", "hook-copy.cjs");
+    writeFileSync(hookPath, HOOK_SRC);
+    createRequire(hookPath)(hookPath);
+    assert.match(process.env.RI_MANUAL_UPGRADES_LINK, /127\.0\.0\.1/);
+    assert.equal(process.env.RI_DISABLE_AUTO_UPGRADE, "true");
+    // 不开开关时不动环境变量
+    for (const k of keys) delete process.env[k];
+    const root2 = mkdtempSync(join(tmpdir(), "menu-opt2-"));
+    mkdirSync(join(root2, "dist", "main"), { recursive: true });
+    writeFileSync(join(root2, "package.json"), JSON.stringify({ main: "dist/main/main.js" }));
+    writeFileSync(join(root2, "dist", "main", "main.js"), "module.exports = 1;\n");
+    injectMenu(root2, { File: "文件" }, HOOK_SRC, {});
+    const hook2 = join(root2, "dist", "main", "hook-copy2.cjs");
+    writeFileSync(hook2, HOOK_SRC);
+    createRequire(hook2)(hook2);
+    assert.equal(process.env.RI_MANUAL_UPGRADES_LINK, undefined);
+  } finally {
+    for (const k of keys) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]; }
+  }
+});

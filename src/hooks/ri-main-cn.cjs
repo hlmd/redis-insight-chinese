@@ -12,8 +12,22 @@
  * 菜单助记符 & 会先剥掉再查词典,译文后补成「窗口(&W)」形式,Alt 快捷键保持可用。
  *
  * 仓库里以 .cjs 存放(仓库 package.json 是 ESM),写入 asar 时改名为 .js(应用是 CommonJS)。
+ *
+ * 另读同目录 ri-main-options.json(apply --no-app-update 时写入 noAppUpdate: true):
+ * 关闭 Redis Insight 自动更新——它升级会整包替换 app.asar,汉化就没了。做法是在应用读环境变量之前
+ * 把更新源指向不可达地址(检查失败只记日志、不弹窗),新版本另认 RI_DISABLE_AUTO_UPGRADE。
  */
 'use strict';
+
+(function applyOptions() {
+  var opt = {};
+  try { opt = require('./ri-main-options.json'); } catch (e) { return; }
+  if (opt && opt.noAppUpdate) {
+    process.env.RI_MANUAL_UPGRADES_LINK = 'http://127.0.0.1:9/ri-chinese-update-disabled/';
+    process.env.RI_UPGRADES_LINK = 'http://127.0.0.1:9/ri-chinese-update-disabled/';
+    process.env.RI_DISABLE_AUTO_UPGRADE = 'true';
+  }
+})();
 
 var WS_RE = /^(\s*)([\s\S]*?)(\s*)$/;
 var PH_RE = /\{\{\s*(\w+)\s*\}\}/g;

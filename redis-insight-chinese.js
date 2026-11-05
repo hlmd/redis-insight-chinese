@@ -17,7 +17,7 @@ import pkg from "./package.json" with { type: "json" };
 import { extractCandidates } from "./src/extract-strings.js";
 
 // 不带值的开关
-const FLAGS = { "--dry-run": "dryRun", "--offline": "offline", "--no-self-update": "noSelfUpdate" };
+const FLAGS = { "--dry-run": "dryRun", "--offline": "offline", "--no-self-update": "noSelfUpdate", "--no-app-update": "noAppUpdate" };
 
 function parseArgs(argv) {
   // 第一个参数是命令;直接以开关开头(如双击后只带 --offline)时视为 apply
@@ -88,7 +88,7 @@ async function cmdApply(opts) {
     // 主进程:原生菜单 / 对话框
     const mainDict = await readJsonResource(MAIN_LOCALE);
     const mainHook = await readResource(MAIN_HOOK);
-    const menu = injectMenu(tmp, mainDict.data, mainHook.text);
+    const menu = injectMenu(tmp, mainDict.data, mainHook.text, { noAppUpdate: opts.noAppUpdate });
     const report =
       (opts.dryRun ? "=== 汉化报告（DRY-RUN 试运行，未写入）===\n" : "=== 汉化报告（注入式）===\n") +
       `[渲染进程] ${rendererDict.source}: ${Object.keys(rendererDict.data).length} 条,可用 ${stats.entries} 条\n` +
@@ -99,7 +99,8 @@ async function cmdApply(opts) {
       `           dist/renderer/${RENDERER_FILE}, index.html <script> ${stats.tagAdded ? "已添加" : "已存在(跳过)"}\n` +
       (menu.skipped
         ? "[主进程]   未找到主进程入口(跳过)"
-        : `[主进程]   ${mainDict.source}: ${menu.entries} 条,dist/main/${MAIN_HOOK_FILE} ${menu.mainPatched ? "已接入入口" : "入口已接入(跳过)"}`);
+        : `[主进程]   ${mainDict.source}: ${menu.entries} 条,dist/main/${MAIN_HOOK_FILE} ${menu.mainPatched ? "已接入入口" : "入口已接入(跳过)"}`) +
+      `\n[应用更新] ${opts.noAppUpdate ? "已关闭 Redis Insight 自动更新(不加 --no-app-update 重新 apply 或 restore 即恢复)" : "保持 Redis Insight 自动更新(升级后需重新 apply;加 --no-app-update 可关闭)"}`;
     if (opts.dryRun) {
       console.log(report);
       return 0;
@@ -172,7 +173,7 @@ export async function run(argv) {
       case "restore": return cmdRestore(opts);
       case "verify": return cmdVerify(opts);
       default:
-        console.error(`未知命令: ${cmd}。可用: apply | extract | restore | verify | version(开关:--offline 不联网、--no-self-update 不自更新、--dry-run 试运行)`);
+        console.error(`未知命令: ${cmd}。可用: apply | extract | restore | verify | version(开关:--offline 不联网、--no-self-update 不自更新、--no-app-update 关闭 Redis Insight 自动更新、--dry-run 试运行)`);
         return 2;
     }
   } catch (e) {

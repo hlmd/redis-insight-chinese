@@ -58,7 +58,7 @@ npm test
 统一入口：
 
 ```bash
-node redis-insight-chinese.js <command> [--install PATH] [--dict PATH] [--out PATH] [--dry-run] [--offline] [--no-self-update] [--min-len N]
+node redis-insight-chinese.js <command> [--install PATH] [--dict PATH] [--out PATH] [--dry-run] [--offline] [--no-self-update] [--no-app-update] [--min-len N]
 ```
 
 命令：`apply`（默认）| `extract` | `restore` | `verify` | `version`
@@ -79,6 +79,7 @@ node redis-insight-chinese.js apply --install "C:/Program Files/Redis Insight"
 | `--dry-run` | 试运行：只打印将注入的字典规模、不写回 asar（仍会生成 `.bak` 备份，因为读取过程需要先从备份解包） | 关闭 |
 | `--offline` | 不联网：不检查程序新版本、不拉取在线译文（有本机缓存则用缓存） | 关闭 |
 | `--no-self-update` | 只拉取在线译文，不自动更新程序本身 | 关闭 |
+| `--no-app-update` | 关闭 **Redis Insight 自身**的自动更新，避免升级后汉化被冲掉（见 [关闭自动更新](docs/disable-auto-update.md)） | 关闭 |
 
 执行流程：
 
@@ -150,6 +151,11 @@ node redis-insight-chinese.js verify --install "C:/Program Files/Redis Insight"
 - **程序自更新**：对比 GitHub 最新 Release，有新版就下载对应平台压缩包、按 `SHA256SUMS.txt` 校验后替换自身，并以原参数重新运行。
 
 源码模式（`node redis-insight-chinese.js`）或 exe 旁放了 `locales/` 时，以本地文件为准，不拉在线译文、也不自更新。
+
+### Redis Insight 自己更新后变回英文
+
+Redis Insight 自动更新会整包替换 `app.asar`，汉化随之消失，重新运行一次注入程序即可（它会先把自己和译文更新到最新再注入）。
+想固定在当前版本、不被冲掉：注入时加 `--no-app-update`，详见 **[关闭 Redis Insight 自动更新](docs/disable-auto-update.md)**。
 
 ## 教程汉化
 
