@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "timestamp": 1793864868
+    "timestamp": 1795770213
   },
   "dom": {
     "A container for Access List Control commands.": "訪問控制列表（ACL）命令的容器。",
@@ -708,6 +708,8 @@
     "Delete a JavaScript library from Redis by name": "按名稱從 Redis 中刪除 JavaScript 庫",
     "Load a new JavaScript library into Redis": "將新的 JavaScript 庫載入到 Redis",
     "List all JavaScript libraries loaded into Redis": "列出已載入到 Redis 的所有 JavaScript 庫",
-    "O(N) where N is the number of libraries loaded into Redis": "O(N)，N 為已載入到 Redis 的庫數"
+    "O(N) where N is the number of libraries loaded into Redis": "O(N)，N 為已載入到 Redis 的庫數",
+    "Check whether a path matches a stored JSON value": "檢查路徑是否匹配已儲存的 JSON 值",
+    "O(N) where N is the size of the JSON": "O(N)，N 為 JSON 的大小"
   }
 }
